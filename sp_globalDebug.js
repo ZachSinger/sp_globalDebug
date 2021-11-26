@@ -1,10 +1,20 @@
 let spDebugProfile = {};
 spDebugProfile.aliasUpdate = Scene_Base.prototype.update;
+spDebugProfile.aliasPlayerCanMove = Game_Player.prototype.canMove;
+spDebugProfile.active = false;
 
 Scene_Base.prototype.update = function(){
     spDebugProfile.aliasUpdate.call(this);
-    if(Input.isPressed('shift') && Input.isTriggered('pageup'))
-        spDebug.open();
+    if(Input.isPressed('shift') && Input.isTriggered('pageup')){
+        spDebugProfile.debugWindow = spDebug.open();
+    }
+}
+
+Game_Player.prototype.canMove = function(){
+    if(spDebugProfile.active)
+        return false;
+
+    return spDebugProfile.aliasPlayerCanMove.call(this)
 }
 
 function spDebug(){
@@ -38,18 +48,17 @@ spDebug.prototype.openObjectBrowser = function(){
 
 spDebug.prototype.close = function(){
     Window_Command.prototype.close.call(this);
-    SceneManager._scene._windowLayer.removeChild(this);
-    $gamePlayer.canMove = Game_Player.prototype.canMove;
+    // SceneManager._scene._windowLayer.removeChild(this);
 }
 
 spDebug.open = function(){
     let instance = new spDebug();
     SceneManager._scene.addWindow(instance);
-
-    $gamePlayer.canMove = ()=> {return false};
-
+    spDebugProfile.active = true;
+    $gameSystem.disableMenu()
     return instance;
 }
+
 
 
 
@@ -203,6 +212,13 @@ spWatchWindowMenu.prototype.makeCommandList = function(){
     this.addCommand("Config", "config")
     
     this.setHandler("config", this.openConfigWindow.bind(this))
+    this.setHandler('cancel', this.cancel.bind(this))
+}
+
+spWatchWindowMenu.prototype.cancel = function(){
+    this.close();
+    spDebugProfile.debugWindow.open();
+    spDebugProfile.debugWindow.activate();
 }
 
 spWatchWindowMenu.prototype.openConfigWindow = function(){
@@ -250,6 +266,7 @@ spWatchWindowConfig.prototype.makeCommandList = function(){
     this.setHandler('changeYOffset', this.changeYOffset)
     this.setHandler('changeAlpha', this.changeAlpha)
     this.setHandler('changeBackAlpha', this.changeBackAlpha)
+    this.setHandler('cancel', this.cancel.bind(this))
 }
 
 spWatchWindowConfig.prototype.changeSnapLeft = function(){
@@ -282,6 +299,12 @@ spWatchWindowConfig.prototype.changeAlpha = function(){
 
 spWatchWindowConfig.prototype.changeBackAlpha = function(){
 
+}
+
+spWatchWindowConfig.prototype.cancel = function(){
+    this.close();
+    this.parent.open()
+    this.parent.activate()
 }
 
 

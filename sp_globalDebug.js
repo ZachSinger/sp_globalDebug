@@ -1,3 +1,12 @@
+let spDebugProfile = {};
+spDebugProfile.aliasUpdate = Scene_Base.prototype.update;
+
+Scene_Base.prototype.update = function(){
+    spDebugProfile.aliasUpdate.call(this);
+    if(Input.isPressed('shift') && Input.isTriggered('pageup'))
+        spDebug.open();
+}
+
 function spDebug(){
     this.initialize.apply(this, arguments)
 }

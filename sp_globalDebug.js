@@ -18,7 +18,7 @@ spDebug.prototype.makeCommandList = function(){
 }
 
 spDebug.prototype.openWatchWindow = function(){
-    console.log('opening watch window')
+    spWatchWindowFactory.openMenu();
 }
 
 spDebug.prototype.openObjectBrowser = function(){
@@ -39,7 +39,6 @@ let spWatchWindowFactory = {
         height: .1,
         alpha: 1,
         backAlpha: .8,
-        frame: true,
         clipLeft: false,
         clipTop: false,
         xOffset: 0,
@@ -101,6 +100,13 @@ spWatchWindowFactory.deactivate = function(){
     SceneManager._scene.removeWindow(this.stage)
 }
 
+spWatchWindowFactory.openMenu = function(){
+    this.menu = this.menu || new spWatchWindowMenu()
+    SceneManager._scene.addChild(this.menu)
+    this.menu.open();
+}
+
+
 Scene_Base.prototype.update = function(){
     spWatchWindowFactory._aliasSceneUpdate.call(this);
     spWatchWindowFactory.execute();
@@ -143,6 +149,117 @@ spWatchWindow.prototype.updateGlobalTransform = function(rect){
     this.createContents();
     this.setStyles();
 }
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+function spWatchWindowMenu(){
+    this.initialize.apply(this, arguments)
+}
+
+spWatchWindowMenu.prototype = Object.create(Window_Command.prototype);
+spWatchWindowMenu.prototype.constructor = spWatchWindowMenu;
+
+spWatchWindowMenu.prototype.initialize = function(){
+    let rect = new Rectangle(0, 0, 200, this.itemHeight() * 3)
+    
+    Window_Command.prototype.initialize.call(this, rect)
+
+    this.selection = -1;
+    this.configWindow = new spWatchWindowConfig();
+    this.configWindow.close();
+   this.addChild(this.configWindow);
+}
+
+spWatchWindowMenu.prototype.makeCommandList = function(){
+    this.addCommand("Add", "add")
+    this.addCommand("Remove", "remove")
+    this.addCommand("Config", "config")
+    
+    this.setHandler("config", this.openConfigWindow.bind(this))
+}
+
+spWatchWindowMenu.prototype.openConfigWindow = function(){
+    console.log('running config callback')
+    this.configWindow.open()
+}
+
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+function spWatchWindowConfig(){
+    this.initialize.apply(this, arguments)
+}
+
+spWatchWindowConfig.prototype = Object.create(Window_Command.prototype);
+spWatchWindowConfig.prototype.constructor = spWatchWindowConfig;
+
+spWatchWindowConfig.prototype.initialize = function(){
+    let rect = new Rectangle(0, 0, 200, 400)
+    
+    Window_Command.prototype.initialize.call(this, rect)
+
+    this.selection = -1;
+    
+}
+
+spWatchWindowConfig.prototype.makeCommandList = function(){
+    let state = spWatchWindowFactory.state;
+
+    this.addCommand(`Snap Left: ${state.clipLeft}`, 'changeSnapLeft')
+    this.addCommand(`Snap Top: ${state.clipTop}`, 'changeSnapTop')
+    this.addCommand(`Width: ${state.width}`, 'changeWidth')
+    this.addCommand(`Height: ${state.height}`, 'changeHeight')
+    this.addCommand(`X Offset: ${state.xOffset}`, 'changeXOffset')
+    this.addCommand(`Y Offset: ${state.yOffset}`, 'changeYOffset')
+    this.addCommand(`Alpha: ${state.alpha}`, 'changeAlpha')
+    this.addCommand(`Back Alpha: ${state.backAlpha}`, 'changeBackAlpha')
+
+    this.setHandler('changeSnapLeft', this.changeSnapLeft)
+    this.setHandler('changeSnapTop', this.changeSnapTop)
+    this.setHandler('changeWidth', this.changeWidth)
+    this.setHandler('changeHeight', this.changeHeight)
+    this.setHandler('changeXOffset', this.changeXOffset)
+    this.setHandler('changeYOffset', this.changeYOffset)
+    this.setHandler('changeAlpha', this.changeAlpha)
+    this.setHandler('changeBackAlpha', this.changeBackAlpha)
+}
+
+spWatchWindowConfig.prototype.changeSnapLeft = function(){
+
+}
+
+spWatchWindowConfig.prototype.changeSnapTop = function(){
+
+}
+
+spWatchWindowConfig.prototype.changeWidth = function(){
+
+}
+
+spWatchWindowConfig.prototype.changeHeight = function(){
+
+}
+
+spWatchWindowConfig.prototype.changeXOffset = function(){
+
+}
+
+spWatchWindowConfig.prototype.changeYOffset = function(){
+
+}
+
+spWatchWindowConfig.prototype.changeAlpha = function(){
+
+}
+
+spWatchWindowConfig.prototype.changeBackAlpha = function(){
+
+}
+
+
+    
+
 
 //Add individual display window, use factory model to manage instances of windows and their content/updating.
 

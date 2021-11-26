@@ -13,17 +13,35 @@ spDebug.prototype.initialize = function(){
 spDebug.prototype.makeCommandList = function(){
     this.addCommand('Watch Windows', 'watchWindow');
     this.addCommand('Object Browser', 'objectBrowser');
-    this.setHandler('watchWindow', this.openWatchWindow);
-    this.setHandler('objectBrowser', this.openObjectBrowser);
+    this.setHandler('watchWindow', this.openWatchWindow.bind(this));
+    this.setHandler('objectBrowser', this.openObjectBrowser.bind(this));
 }
 
 spDebug.prototype.openWatchWindow = function(){
+    console.log(this)
+    this.close();
     spWatchWindowFactory.openMenu();
 }
 
 spDebug.prototype.openObjectBrowser = function(){
     console.log('opening object browser')
 }
+
+spDebug.prototype.close = function(){
+    Window_Command.prototype.close.call(this);
+    SceneManager._scene._windowLayer.removeChild(this);
+    $gamePlayer.canMove = Game_Player.prototype.canMove;
+}
+
+spDebug.open = function(){
+    let instance = new spDebug();
+    SceneManager._scene.addWindow(instance);
+
+    $gamePlayer.canMove = ()=> {return false};
+
+    return instance;
+}
+
 
 
 /*===========================================================================================================================================================
@@ -160,7 +178,7 @@ spWatchWindowMenu.prototype = Object.create(Window_Command.prototype);
 spWatchWindowMenu.prototype.constructor = spWatchWindowMenu;
 
 spWatchWindowMenu.prototype.initialize = function(){
-    let rect = new Rectangle(0, 0, 200, this.itemHeight() * 3)
+    let rect = new Rectangle(0, 0, 200, (this.itemHeight() * 3) + Window_Command.prototype.itemPadding() * 4)
     
     Window_Command.prototype.initialize.call(this, rect)
 
@@ -179,7 +197,7 @@ spWatchWindowMenu.prototype.makeCommandList = function(){
 }
 
 spWatchWindowMenu.prototype.openConfigWindow = function(){
-    console.log('running config callback')
+    this.close()
     this.configWindow.open()
 }
 

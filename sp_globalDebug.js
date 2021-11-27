@@ -40,6 +40,7 @@ spDebug.prototype.openWatchWindow = function(){
     console.log(this)
     this.close();
     spWatchWindowFactory.openMenu();
+
 }
 
 spDebug.prototype.openObjectBrowser = function(){
@@ -98,7 +99,7 @@ spWatchWindowFactory.getWindowDimensions = function(index){
     let width = state.width * gWidth;
     let height = state.height * gHeight;
     let xOffset = gWidth * state.xOffset;
-    let yOffset = gHeight * state.xOffset;
+    let yOffset = gHeight * state.yOffset;
     let xPos = state.clipLeft ? xOffset : gWidth - width - xOffset;
     let yPos = state.clipTop ? yOffset : gHeight - height - yOffset;
 
@@ -140,6 +141,7 @@ spWatchWindowFactory.openMenu = function(){
     this.menu = this.menu || new spWatchWindowMenu()
     SceneManager._scene.addChild(this.menu)
     this.menu.open();
+    this.activate();
 }
 
 
@@ -213,6 +215,12 @@ spWatchWindowMenu.prototype.makeCommandList = function(){
     
     this.setHandler("config", this.openConfigWindow.bind(this))
     this.setHandler('cancel', this.cancel.bind(this))
+    this.setHandler('add', this.add.bind(this))
+}
+
+spWatchWindowMenu.prototype.add = function(){
+    spWatchWindowFactory.createWatchWindow()
+    this.activate()
 }
 
 spWatchWindowMenu.prototype.cancel = function(){
@@ -249,57 +257,99 @@ spWatchWindowConfig.prototype.initialize = function(){
 spWatchWindowConfig.prototype.makeCommandList = function(){
     let state = spWatchWindowFactory.state;
 
-    this.addCommand(`Snap Left: ${state.clipLeft}`, 'changeSnapLeft')
-    this.addCommand(`Snap Top: ${state.clipTop}`, 'changeSnapTop')
-    this.addCommand(`Width: ${state.width}`, 'changeWidth')
-    this.addCommand(`Height: ${state.height}`, 'changeHeight')
-    this.addCommand(`X Offset: ${state.xOffset}`, 'changeXOffset')
-    this.addCommand(`Y Offset: ${state.yOffset}`, 'changeYOffset')
-    this.addCommand(`Alpha: ${state.alpha}`, 'changeAlpha')
-    this.addCommand(`Back Alpha: ${state.backAlpha}`, 'changeBackAlpha')
+    this.addCommand(`Snap Left: ${state.clipLeft}`, 'execute')
+    this.addCommand(`Snap Top: ${state.clipTop}`, 'execute')
+    this.addCommand(`Width: ${state.width.toFixed(2)}`, 'execute')
+    this.addCommand(`Height: ${state.height.toFixed(2)}`, 'execute')
+    this.addCommand(`X Offset: ${state.xOffset.toFixed(2)}`, 'execute')
+    this.addCommand(`Y Offset: ${state.yOffset.toFixed(2)}`, 'execute')
+    this.addCommand(`Alpha: ${state.alpha.toFixed(2)}`, 'execute')
+    this.addCommand(`Back Alpha: ${state.backAlpha.toFixed(2)}`, 'execute')
 
-    this.setHandler('changeSnapLeft', this.changeSnapLeft)
-    this.setHandler('changeSnapTop', this.changeSnapTop)
-    this.setHandler('changeWidth', this.changeWidth)
-    this.setHandler('changeHeight', this.changeHeight)
-    this.setHandler('changeXOffset', this.changeXOffset)
-    this.setHandler('changeYOffset', this.changeYOffset)
-    this.setHandler('changeAlpha', this.changeAlpha)
-    this.setHandler('changeBackAlpha', this.changeBackAlpha)
+    this.setHandler('execute', this.execute.bind(this))
     this.setHandler('cancel', this.cancel.bind(this))
 }
 
-spWatchWindowConfig.prototype.changeSnapLeft = function(){
-
+spWatchWindowConfig.prototype.execute = function(){
+    this.activate();
 }
 
-spWatchWindowConfig.prototype.changeSnapTop = function(){
+spWatchWindowConfig.prototype.onLeft = function(){
+    let state = spWatchWindowFactory.state;
+    console.log(this._index)
+    switch(this._index){
+        case 0: 
+            state.clipLeft = !state.clipLeft;
+            break;
+        case 1: 
+            state.clipTop = !state.clipTop;        
+            break;
+        case 2:
+            state.width = Math.max(state.width - .05, 0);
+            break;
+        case 3:
+            state.height = Math.max(state.height - .05, 0);
+            break;
+        case 4:
+            state.xOffset -= .05;
+            break;
+        case 5:
+            state.yOffset -= .05;
+            break;
+        case 6 :
+            state.alpha -= .05;
+            break;
+        case 7:
+            state.backAlpha -= .05;
+            break;
+    }
 
+    this.refreshCommandList();
+    spWatchWindowFactory.updateGlobalTransform();
 }
 
-spWatchWindowConfig.prototype.changeWidth = function(){
+spWatchWindowConfig.prototype.onRight = function(){
+    let state = spWatchWindowFactory.state;
+    console.log(this._index)
+    switch(this._index){
+        case 0: 
+            state.clipLeft = !state.clipLeft;
+            break;
+        case 1: 
+            state.clipTop = !state.clipTop;        
+            break;
+        case 2:
+            state.width = Math.min(state.width + .05, 1);
+            break;
+        case 3:
+            state.height = Math.min(state.height + .05, 1)
+            break;
+        case 4:
+            state.xOffset += .05;
+            break;
+        case 5:
+            state.yOffset += .05;
+            break;
+        case 6 :
+            state.alpha += .05;
+            break;
+        case 7:
+            state.backAlpha += .05;
+            break;
+    }
 
+    this.refreshCommandList();
+    spWatchWindowFactory.updateGlobalTransform();
 }
 
-spWatchWindowConfig.prototype.changeHeight = function(){
-
+spWatchWindowConfig.prototype.refreshCommandList = function(){
+    this.clearCommandList();
+    this.makeCommandList();
+    this.contents.clear();
+    this.createContents();
+    this.drawAllItems();
 }
 
-spWatchWindowConfig.prototype.changeXOffset = function(){
-
-}
-
-spWatchWindowConfig.prototype.changeYOffset = function(){
-
-}
-
-spWatchWindowConfig.prototype.changeAlpha = function(){
-
-}
-
-spWatchWindowConfig.prototype.changeBackAlpha = function(){
-
-}
 
 spWatchWindowConfig.prototype.cancel = function(){
     this.close();
@@ -307,6 +357,16 @@ spWatchWindowConfig.prototype.cancel = function(){
     this.parent.activate()
 }
 
+spWatchWindowConfig.prototype.update = function(){
+    Window_Command.prototype.update.call(this);
+    if(Input.isTriggered('left')){
+        this.onLeft();
+    }
+
+    if(Input.isTriggered('right')){
+        this.onRight();
+    }
+}
 
     
 

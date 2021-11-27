@@ -85,11 +85,19 @@ let spWatchWindowFactory = {
 };
 
 spWatchWindowFactory.createWatchWindow = function(cb){
-    cb = cb ? cb : ()=>{ return "test"}
+    let length = this.windows.length;
+    cb = cb ? cb : ()=>{ return "test " + length}
     let window = new spWatchWindow(cb, this.getWindowDimensions());
     this.windows.push(window);
     this.stage.addChild(window);
     return window
+}
+
+spWatchWindowFactory.removeWatchWindow = function(index){
+    let win = this.windows.splice(index, 1)[0];
+    
+    this.stage.removeChild(win);
+    this.updateGlobalTransform()
 }
 
 spWatchWindowFactory.getWindowDimensions = function(index){
@@ -202,10 +210,11 @@ spWatchWindowMenu.prototype.initialize = function(){
     
     Window_Command.prototype.initialize.call(this, rect)
 
-    this.selection = -1;
+    this.selection = 0;
     this.configWindow = new spWatchWindowConfig();
     this.configWindow.close();
-   this.addChild(this.configWindow);
+    this.configWindow.deactivate();
+    this.addChild(this.configWindow);
 }
 
 spWatchWindowMenu.prototype.makeCommandList = function(){
@@ -216,6 +225,16 @@ spWatchWindowMenu.prototype.makeCommandList = function(){
     this.setHandler("config", this.openConfigWindow.bind(this))
     this.setHandler('cancel', this.cancel.bind(this))
     this.setHandler('add', this.add.bind(this))
+    this.setHandler('remove', this.remove.bind(this))
+}
+
+spWatchWindowMenu.prototype.remove = function(){
+    spWatchWindowFactory.removeWatchWindow(this.selection)
+    this.selection = Math.min(this.selection + 1, spWatchWindowFactory.windows.length - 1);
+    if(spWatchWindowFactory.windows.length)
+        spWatchWindowFactory.windows[this.selection].frameVisible = true;
+
+    this.activate()
 }
 
 spWatchWindowMenu.prototype.add = function(){
@@ -231,7 +250,29 @@ spWatchWindowMenu.prototype.cancel = function(){
 
 spWatchWindowMenu.prototype.openConfigWindow = function(){
     this.close()
+    this.configWindow.activate()
     this.configWindow.open()
+}
+
+spWatchWindowMenu.prototype.listenForSelectionControls = function(){
+    let length = spWatchWindowFactory.windows.length;
+    let selection = this.selection;
+
+    spWatchWindowFactory.windows[this.selection].frameVisible = false;
+
+    if(Input.isTriggered('right')){
+        this.selection = selection - 1 >= 0 ? selection - 1 : length - 1;
+    } else if(Input.isTriggered('left')){
+        this.selection = selection + 1 < length ? selection + 1 : 0;
+    }
+
+    spWatchWindowFactory.windows[this.selection].frameVisible = true;
+}
+
+spWatchWindowMenu.prototype.update = function(){
+    Window_Command.prototype.update.call(this)
+    if(this._index == 1 && spWatchWindowFactory.windows.length > 0)
+        this.listenForSelectionControls()
 }
 
 
@@ -359,6 +400,10 @@ spWatchWindowConfig.prototype.cancel = function(){
 
 spWatchWindowConfig.prototype.update = function(){
     Window_Command.prototype.update.call(this);
+    if(!this.active)
+        return 
+
+    console.log('listening on config')
     if(Input.isTriggered('left')){
         this.onLeft();
     }

@@ -140,4 +140,16 @@ Scene_MenuBase.prototype.update = function(){
         Movement Handlers
  ===================================================================================================*/ 
 
- standardPlayer.sp_Core
+ standardPlayer.sp_Core.allowPlayerMovement = true;
+ standardPlayer.sp_Core.aliasPlayerCanMove = Game_Player.prototype.canMove;
+
+ Game_Player.prototype.canMove = function(){
+     if(standardPlayer.sp_Core.allowPlayerMovement)
+        return standardPlayer.sp_Core.aliasPlayerCanMove.call(this);
+ }
+
+ standardPlayer.sp_Core.togglePlayerMovement = function(canMove){
+    this.allowPlayerMovement = arguments.length > 0 ? 
+    canMove:
+    !this.allowPlayerMovement;
+ }

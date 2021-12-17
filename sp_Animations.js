@@ -92,11 +92,10 @@ class spAnimation {
         return action;
     }
 
-    // myAnim.action(1).moveXY(100, 200, 50)                          //add an action that moves the target to x100, y200 over 50 frames, as part of action 1
-    // myAnim.action(2).setScale(['width', 'height'], [1.3, 1.5], 60) //add an acti0on that changes target width/height over 60 frames, as part of action 2. Will play simultaneously with action 1.
-    // myAnim.action(3).moveXYRel(30, 20, 20).waitForStep(1)          //add an action that moves 30 x andn 20 y from the position the target is at when this step begins. will wait for action 1 to complete
-    // myAnim.action(1).setAlpha(.2, 30)                              //Adds to original action 1, so that in addition to original moveXY, it will also now change alpha. however, the duration has been rewritten from 30 to 50, since an arg was provided
-    // myAnim.action(2).then().setVisible(false)                      //Adds an additional step after the original step from action 2 completes. Once the first step completes, target's visible property will be set to false
+    activate(){
+        this.active = true;
+        this.actions.forEach(action => action.activate())
+    }
 
 }
 
@@ -127,6 +126,17 @@ class sp_Action{
         let profile = {
             'x': standardPlayer.sp_Core.plotLinearPath(cache['x'], x, dur, pad),
             'y': standardPlayer.sp_Core.plotLinearPath(cache['y'], y, dur, pad)
+        }
+        this.steps[this.index] = Object.assign({}, this.step(), profile);
+
+        this.dur[this.index] = dur;
+        return this;
+    }
+
+    setAlpha(value, dur, pad){
+        let cache = this.index ? this.getPositionData() : this.animation.initalCache;
+        let profile = {
+            'alpha': standardPlayer.sp_Core.plotLinearPath(cache['alpha'], value, dur, pad)
         }
         this.steps[this.index] = Object.assign({}, this.step(), profile);
 

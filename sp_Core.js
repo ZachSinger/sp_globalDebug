@@ -92,8 +92,6 @@ standardPlayer.sp_Core.removeUpdate = function(locationName, method){
 }
 
 Scene_Base.prototype.update = function(){
-    let thisObject = this;
-
     standardPlayer.sp_Core.updateContainer._sceneBaseUpdatesPre.forEach(
         item => item()
     )
@@ -255,4 +253,29 @@ Scene_MenuBase.prototype.update = function(){
      standardPlayer.sp_Core.getCharacterFromSpriteset($gamePlayer)
 
      standardPlayer.sp_Core._aliasMapStart.call(this)
+ }
+
+
+
+ /* ===================================================================================================
+        Common Utility Functions
+ ===================================================================================================*/ 
+
+ standardPlayer.sp_Core.plotLinearPath = function(orig, dest, frames, pad){
+    let dist = dest - orig;
+    let inc = dist / frames;
+    let result = [];
+
+    pad = pad ? pad : 0;
+    for(let i = 0; i < pad; i++){
+        result[i] = orig;
+    }
+
+
+    let length = result.length - 1;
+    for(let i = 1; i <= frames; i++){
+        result[length + i] = orig + inc * i
+    }
+
+    return result
  }

@@ -43,6 +43,7 @@ spDebug.prototype.onCancel = function(){
     spDebugProfile.debugWindow = null;
     spDebugProfile.active = false;
     $gameSystem.enableMenu()
+}
 
 
 spDebug.prototype.openWatchWindow = function(){

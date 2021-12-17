@@ -45,20 +45,26 @@ sp_Core.addUpdate = function(location, method, index){
     location.splice(index, 0, method);
 }
 
-sp_Core.removeBaseUpdate = function(method){
-    let updates = '_sceneBaseUpdates';
+sp_Core.removeBaseUpdate = function(method, post){
+    let updates = post ?
+    '_sceneBaseUpdatesPost':
+    '_sceneBaseUpdatesPre';
     
     this.removeUpdate(updates, method)
 }
 
-sp_Core.removeMapUpdate = function(method){
-    let updates =  '_sceneMapUpdates';
+sp_Core.removeMapUpdate = function(method, post){
+    let updates = post ?
+    '_sceneMapUpdatesPost':
+    '_sceneMapUpdatesPre';
 
     this.removeUpdate(updates, method)
 }
 
-sp_Core.removeMenuUpdate = function(method){
-    let updates = '_sceneMenuUpdates'
+sp_Core.removeMenuUpdate = function(method, post){
+    let updates = post ?
+    '_sceneMenuUpdatesPost':
+    '_sceneMenuUpdatesPre';
 
     this.removeUpdate(updates, method)
 }

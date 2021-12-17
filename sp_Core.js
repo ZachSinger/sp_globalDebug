@@ -1,40 +1,55 @@
-let sp_Core = {
+var Imported = Imported || {};
+Imported.sp_Core = 'sp_Core';
+
+var standardPlayer = standardPlayer || {params: {}};
+standardPlayer.sp_Core = standardPlayer.sp_Core || {};
+
+standardPlayer.sp_Core.Parameters = PluginManager.parameters('standardPlayer.sp_Core');
+
+
+/* ===================================================================================================
+        Update Handlers
+ ===================================================================================================*/ 
+standardPlayer.sp_Core.updateContainer = {
     _sceneBaseUpdatesPre:[],
     _sceneMenuUpdatesPre:[],
     _sceneMapUpdatesPre:[],
     _sceneBaseUpdatesPost:[],
     _sceneMenuUpdatesPost:[],
-    _sceneMapUpdatesPost:[],
-    _aliasSceneBase: Scene_Base.prototype.update,
-    _aliasSceneMenu: Scene_MenuBase.prototype.update,
-    _aliasSceneMap: Scene_Map.prototype.update
+    _sceneMapUpdatesPost:[]
 }
 
-sp_Core.addBaseUpdate = function(method, post, index){
+standardPlayer.sp_Core._aliasSceneBase = Scene_Base.prototype.update;
+standardPlayer.sp_Core._aliasSceneMenu = Scene_MenuBase.prototype.update;
+standardPlayer.sp_Core._aliasSceneMap = Scene_Map.prototype.update;
+
+standardPlayer.sp_Core.addBaseUpdate = function(method, post, index){
     let updates = post ? 
-    this._sceneBaseUpdatesPost:
-    this._sceneBaseUpdatesPre;
+    this.updateContainer._sceneBaseUpdatesPost:
+    this.updateContainer._sceneBaseUpdatesPre;
     
     this.addUpdate(updates, method, index)
 }
 
-sp_Core.addMapUpdate = function(method, post, index){
+standardPlayer.sp_Core.addMapUpdate = function(method, post, index){
+    console.log(this === standardPlayer)
+    console.log(this === standardPlayer.sp_Core)
     let updates = post ? 
-    this._sceneMapUpdatesPost:
-    this._sceneMapUpdatesPre;
+    this.updateContainer._sceneMapUpdatesPost:
+    this.updateContainer._sceneMapUpdatesPre;
     
     this.addUpdate(updates, method, index)
 }
 
-sp_Core.addMenuUpdate = function(method, post, index){
+standardPlayer.sp_Core.addMenuUpdate = function(method, post, index){
     let updates = post ? 
-    this._sceneMenuUpdatesPre:
-    this._sceneMenuUpdatesPost;
+    this.updateContainer._sceneMenuUpdatesPre:
+    this.updateContainer._sceneMenuUpdatesPost;
 
     this.addUpdate(updates, method, index)
 }
 
-sp_Core.addUpdate = function(location, method, index){
+standardPlayer.sp_Core.addUpdate = function(location, method, index){
     
     index = typeof index !== 'undefined' ? 
         arguments[1] <= location.length ? 
@@ -45,7 +60,7 @@ sp_Core.addUpdate = function(location, method, index){
     location.splice(index, 0, method);
 }
 
-sp_Core.removeBaseUpdate = function(method, post){
+standardPlayer.sp_Core.removeBaseUpdate = function(method, post){
     let updates = post ?
     '_sceneBaseUpdatesPost':
     '_sceneBaseUpdatesPre';
@@ -53,7 +68,7 @@ sp_Core.removeBaseUpdate = function(method, post){
     this.removeUpdate(updates, method)
 }
 
-sp_Core.removeMapUpdate = function(method, post){
+standardPlayer.sp_Core.removeMapUpdate = function(method, post){
     let updates = post ?
     '_sceneMapUpdatesPost':
     '_sceneMapUpdatesPre';
@@ -61,7 +76,7 @@ sp_Core.removeMapUpdate = function(method, post){
     this.removeUpdate(updates, method)
 }
 
-sp_Core.removeMenuUpdate = function(method, post){
+standardPlayer.sp_Core.removeMenuUpdate = function(method, post){
     let updates = post ?
     '_sceneMenuUpdatesPost':
     '_sceneMenuUpdatesPre';
@@ -69,23 +84,23 @@ sp_Core.removeMenuUpdate = function(method, post){
     this.removeUpdate(updates, method)
 }
 
-sp_Core.removeUpdate = function(locationName, method){
-    let location = this[locationName];
+standardPlayer.sp_Core.removeUpdate = function(locationName, method){
+    let location = this.updateContainer[locationName];
     
-    this[locationName] = location.filter(item => item != method);
+    this.updateContainer[locationName] = location.filter(item => item != method);
     
 }
 
 Scene_Base.prototype.update = function(){
     let thisObject = this;
 
-    sp_Core._sceneBaseUpdatesPre.forEach(
+    standardPlayer.sp_Core.updateContainer._sceneBaseUpdatesPre.forEach(
         item => item.call(thisObject)
     )
 
-    sp_Core._aliasSceneBase.call(this);
+    standardPlayer.sp_Core._aliasSceneBase.call(this);
 
-    sp_Core._sceneBaseUpdatesPost.forEach(
+    standardPlayer.sp_Core.updateContainer._sceneBaseUpdatesPost.forEach(
         item => item.call(thisObject)
     )
 }
@@ -94,13 +109,13 @@ Scene_Base.prototype.update = function(){
 Scene_Map.prototype.update = function(){
     let thisObject = this;
 
-    sp_Core._sceneMapUpdatesPre.forEach(
+    standardPlayer.sp_Core.updateContainer._sceneMapUpdatesPre.forEach(
         item => item.call(thisObject)
     )
 
-    sp_Core._aliasSceneMap.call(this);
+    standardPlayer.sp_Core._aliasSceneMap.call(this);
 
-    sp_Core._sceneMapUpdatesPost.forEach(
+    standardPlayer.sp_Core.updateContainer._sceneMapUpdatesPost.forEach(
         item => item.call(thisObject)
     )
 }
@@ -108,13 +123,21 @@ Scene_Map.prototype.update = function(){
 Scene_MenuBase.prototype.update = function(){
     let thisObject = this;
 
-    sp_Core._sceneMenuUpdatesPre.forEach(
+    standardPlayer.sp_Core.updateContainer._sceneMenuUpdatesPre.forEach(
         item => item.call(thisObject)
     )
 
-    sp_Core._aliasSceneMenu.call(this);
+    standardPlayer.sp_Core._aliasSceneMenu.call(this);
 
-    sp_Core._sceneMenuUpdatesPost.forEach(
+    standardPlayer.sp_Core.updateContainer._sceneMenuUpdatesPost.forEach(
         item => item.call(thisObject)
     )
 }
+
+
+
+/* ===================================================================================================
+        Movement Handlers
+ ===================================================================================================*/ 
+
+ standardPlayer.sp_Core

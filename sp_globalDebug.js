@@ -43,7 +43,7 @@ spDebug.prototype.onCancel = function(){
     spDebugProfile.debugWindow = null;
     spDebugProfile.active = false;
     $gameSystem.enableMenu()
-}
+
 
 spDebug.prototype.openWatchWindow = function(){
     console.log(this)
@@ -102,6 +102,7 @@ spWatchWindowFactory.createWatchWindow = function(cb){
     let length = this.windows.length;
     let f = prompt("enter your function")
     cb = cb ? cb : ()=>{return eval(f)}
+
     let window = new spWatchWindow(cb, this.getWindowDimensions());
 
     this.windows.push(window);
@@ -437,6 +438,7 @@ spWatchWindowConfig.prototype.update = function(){
 }
 
 
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -518,6 +520,7 @@ spObjectDescWindow.prototype.display = function(data){
     this.contents.clear();
     this.drawTextEx(data.toString())
 }
+
 
 
 

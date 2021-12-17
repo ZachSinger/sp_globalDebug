@@ -153,3 +153,22 @@ Scene_MenuBase.prototype.update = function(){
     canMove:
     !this.allowPlayerMovement;
  }
+
+
+ standardPlayer.sp_Core.allowEventMovement = true;
+ standardPlayer.sp_Core.aliasEventSelfMovement = Game_Event.prototype.updateSelfMovement;
+
+ Game_Event.prototype.canMove = function(){
+     return standardPlayer.sp_Core.allowEventMovement;
+ }
+
+ Game_Event.prototype.updateSelfMovement = function(){
+     if(this.canMove())
+        standardPlayer.sp_Core.aliasEventSelfMovement.call(this);
+ }
+
+ standardPlayer.sp_Core.toggleEventMovement = function(canMove){
+    this.allowEventMovement = arguments.length > 0 ? 
+    canMove:
+    !this.allowEventMovement;
+ }

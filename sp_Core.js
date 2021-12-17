@@ -181,10 +181,46 @@ Scene_MenuBase.prototype.update = function(){
  standardPlayer.sp_Core.toggleAction = function(action, enable){
     let keys = Object.keys(Input.keyMapper);
     let vals = Object.values(Input.keyMapper);
+    let disabled = 'temp' + action;
+    let process = typeof enable == 'undefined' ? 2 : enable ? 0 : 1;
 
-    let searchKey = enable ? 'temp' + action : action;
     for(i in keys){
-        if(vals[i] == searchKey)
-            Input.keyMapper[keys[i]] = enable ? action : 'temp' + action; 
+        if(process == 0){
+            //enabled
+            if(vals[i] == disabled)
+                Input.keyMapper[keys[i]] = action;
+        } else if(process == 1){
+            //disabled
+            if(vals[i] == action)
+                Input.keyMapper[keys[i]] = disabled;
+        } else {
+            //toggled
+            if(vals[i] == disabled)
+                Input.keyMapper[keys[i]] = action;
+            else if(vals[i] == action)
+                Input.keyMapper[keys[i]] = disabled;
+        }
+        
+        
     }
+ }
+
+ standardPlayer.sp_Core.toggleInput = function(enable){
+    let vals = ["ok", "cancel", "shift", "control", "pageup", "pagedown", "up", "down", "right", "left", "tab", "escape"];
+
+    this.toggleKeys(vals, enable);
+ }
+
+ standardPlayer.sp_Core.toggleMovementKeys = function(enable){
+    let vals = ["up", "down", "left", "right"];
+
+    this.toggleKeys(vals, enable);
+ }
+
+ standardPlayer.sp_Core.toggleSelectKey = function(enable) {
+    this.toggleKeys(["ok"], enable)
+ }
+
+ standardPlayer.sp_Core.toggleKeys = function(vals, enable){
+    vals.forEach(item => this.toggleAction(item, enable));
  }

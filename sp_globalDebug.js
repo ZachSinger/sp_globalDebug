@@ -27,6 +27,8 @@ spDebug.prototype.constructor = spDebug;
 spDebug.prototype.initialize = function(){
     let rect = new Rectangle(0, 0, Graphics.width * .3, Graphics.height * .4)
     Window_Command.prototype.initialize.call(this, rect)
+
+    this.setHandler('cancel', this.onCancel.bind(this))
 }
 
 spDebug.prototype.makeCommandList = function(){
@@ -36,6 +38,13 @@ spDebug.prototype.makeCommandList = function(){
     this.setHandler('objectBrowser', this.openObjectBrowser.bind(this));
 }
 
+spDebug.prototype.onCancel = function(){
+    this.close();
+    spDebugProfile.debugWindow = null;
+    spDebugProfile.active = false;
+    $gameSystem.enableMenu()
+
+
 spDebug.prototype.openWatchWindow = function(){
     console.log(this)
     this.close();
@@ -44,7 +53,11 @@ spDebug.prototype.openWatchWindow = function(){
 }
 
 spDebug.prototype.openObjectBrowser = function(){
-    console.log('opening object browser')
+    this.browserWindow = new spObjectBrowserWindow();
+    this.browserDescWindow = new spObjectDescWindow();
+    this.close();
+    SceneManager._scene.addChild(this.browserWindow)
+    SceneManager._scene.addChild(this.browserDescWindow)
 }
 
 spDebug.prototype.close = function(){
@@ -71,6 +84,7 @@ let spWatchWindowFactory = {
     active: false,
     windows: [],
     stage: new PIXI.Container,
+    scene: null,
     state: {
         width: .5,
         height: .1,
@@ -86,10 +100,15 @@ let spWatchWindowFactory = {
 
 spWatchWindowFactory.createWatchWindow = function(cb){
     let length = this.windows.length;
-    cb = cb ? cb : ()=>{ return "test " + length}
+    let f = prompt("enter your function")
+    cb = cb ? cb : ()=>{return eval(f)}
+
     let window = new spWatchWindow(cb, this.getWindowDimensions());
+
     this.windows.push(window);
     this.stage.addChild(window);
+    this.scene = SceneManager._scene;
+
     return window
 }
 
@@ -125,7 +144,12 @@ spWatchWindowFactory.execute = function(){
 }
 
 spWatchWindowFactory.refreshAllWindows = function(){
-    this.windows.forEach((element)=> element.drawContent())
+    if(SceneManager._scene !== this.scene)
+        return
+    this.windows.forEach((element)=> {
+        element.drawContent();
+        this.stage.addChild(element)
+    })
 }
 
 spWatchWindowFactory.updateGlobalTransform = function(){
@@ -413,7 +437,91 @@ spWatchWindowConfig.prototype.update = function(){
     }
 }
 
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+function spObjectBrowserWindow(){
+    this.initialize.apply(this, arguments)
+}
+
+spObjectBrowserWindow.prototype = Object.create(Window_Command.prototype)
+spObjectBrowserWindow.prototype.constructor = spObjectBrowserWindow;
+
+spObjectBrowserWindow.prototype.initialize = function(){
+    let rect = new Rectangle(0, 0, 200, Graphics.height)
+    Window_Command.prototype.initialize.call(this, rect)
+}
+
+spObjectBrowserWindow.prototype.makeCommandList = function(){
+    let obj = this.getCurrentObject()
+    let keys = Object.keys(obj);
+
+    keys.forEach((item)=>{
+        if(obj === window ){
+            if(item.contains("$"))
+                this.addCommand(item, "confirmSelect")
+        } else  {
+            this.addCommand(item, "confirmSelect")
+        }
+    })
+
+    this.setHandler('confirmSelect', this.confirmSelect.bind(this))
+}
+
+spObjectBrowserWindow.prototype.getCurrentObject = function(){
+    this.currentObject = this.currentObject ? this.currentObject : window;
+    return this.currentObject
+}
+
+spObjectBrowserWindow.prototype.getCurrentPropName = function(){
+    return this._list[this._index].name
+}
+
+spObjectBrowserWindow.prototype.confirmSelect = function(){
+    let obj = this.getCurrentObject()
+    let data = obj[this.getCurrentPropName()];
+    this.currentObject = this.currentObject[this.getCurrentPropName()];
+    console.log(data)
+    this.remakeCommandList()
+    this.select(0)
+    this.activate()
+}
+
+spObjectBrowserWindow.prototype.remakeCommandList = function(){
+    this.clearCommandList();
+    this.contents.clear();
+    this.makeCommandList();
+    this.drawAllItems();
+}
     
+
+
+
+
+
+
+
+
+function spObjectDescWindow(){
+    this.initialize.apply(this, arguments)
+}
+
+spObjectDescWindow.prototype = Object.create(Window_Base.prototype)
+spObjectDescWindow.prototype.constructor = spObjectDescWindow;
+
+spObjectDescWindow.prototype.initialize = function(){
+    let rect = new Rectangle(Graphics.width - 400, 0, 400, 100)
+    Window_Base.prototype.initialize.call(this, rect)
+}
+
+spObjectDescWindow.prototype.display = function(data){
+    this.contents.clear();
+    this.drawTextEx(data.toString())
+}
+
+
 
 
 //Add individual display window, use factory model to manage instances of windows and their content/updating.

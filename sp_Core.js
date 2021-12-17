@@ -224,3 +224,35 @@ Scene_MenuBase.prototype.update = function(){
  standardPlayer.sp_Core.toggleKeys = function(vals, enable){
     vals.forEach(item => this.toggleAction(item, enable));
  }
+
+
+ /* ===================================================================================================
+        Character Sprite tools
+ ===================================================================================================*/ 
+
+ standardPlayer.sp_Core.getCharactersSpriteset = function(){
+    return SceneManager._scene._spriteset.children[0].children[2].children;
+ }
+
+ standardPlayer.sp_Core.getCharacterFromSpriteset = function(character){
+    let spriteset = this.getCharactersSpriteset();
+
+    for(sprite of spriteset){
+        if(sprite._character == character)
+            character.sprite = sprite;
+    }
+ }
+
+ standardPlayer.sp_Core.setSpriteReferences = function(){
+    let evs = $gameMap.events().concat($gamePlayer._followers._data);
+
+    evs.forEach(ev => standardPlayer.sp_Core.getCharacterFromSpriteset(ev))
+ }
+
+ standardPlayer.sp_Core._aliasMapStart = Scene_Map.prototype.start;
+ Scene_Map.prototype.start = function(){
+     standardPlayer.sp_Core.setSpriteReferences();
+     standardPlayer.sp_Core.getCharacterFromSpriteset($gamePlayer)
+
+     standardPlayer.sp_Core._aliasMapStart.call(this)
+ }

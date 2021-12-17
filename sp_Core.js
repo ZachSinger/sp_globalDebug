@@ -95,13 +95,13 @@ Scene_Base.prototype.update = function(){
     let thisObject = this;
 
     standardPlayer.sp_Core.updateContainer._sceneBaseUpdatesPre.forEach(
-        item => item.call(thisObject)
+        item => item()
     )
 
     standardPlayer.sp_Core._aliasSceneBase.call(this);
 
     standardPlayer.sp_Core.updateContainer._sceneBaseUpdatesPost.forEach(
-        item => item.call(thisObject)
+        item => item()
     )
 }
 
@@ -110,13 +110,13 @@ Scene_Map.prototype.update = function(){
     let thisObject = this;
 
     standardPlayer.sp_Core.updateContainer._sceneMapUpdatesPre.forEach(
-        item => item.call(thisObject)
+        item => item()
     )
 
     standardPlayer.sp_Core._aliasSceneMap.call(this);
 
     standardPlayer.sp_Core.updateContainer._sceneMapUpdatesPost.forEach(
-        item => item.call(thisObject)
+        item => item()
     )
 }
 
@@ -124,13 +124,13 @@ Scene_MenuBase.prototype.update = function(){
     let thisObject = this;
 
     standardPlayer.sp_Core.updateContainer._sceneMenuUpdatesPre.forEach(
-        item => item.call(thisObject)
+        item => item()
     )
 
     standardPlayer.sp_Core._aliasSceneMenu.call(this);
 
     standardPlayer.sp_Core.updateContainer._sceneMenuUpdatesPost.forEach(
-        item => item.call(thisObject)
+        item => item()
     )
 }
 

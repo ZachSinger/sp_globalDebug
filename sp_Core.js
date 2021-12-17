@@ -141,22 +141,14 @@ Scene_MenuBase.prototype.update = function(){
  ===================================================================================================*/ 
 
  standardPlayer.sp_Core.allowPlayerMovement = true;
+ standardPlayer.sp_Core.allowEventMovement = true;
  standardPlayer.sp_Core.aliasPlayerCanMove = Game_Player.prototype.canMove;
+ standardPlayer.sp_Core.aliasEventSelfMovement = Game_Event.prototype.updateSelfMovement;
 
  Game_Player.prototype.canMove = function(){
      if(standardPlayer.sp_Core.allowPlayerMovement)
         return standardPlayer.sp_Core.aliasPlayerCanMove.call(this);
  }
-
- standardPlayer.sp_Core.togglePlayerMovement = function(canMove){
-    this.allowPlayerMovement = arguments.length > 0 ? 
-    canMove:
-    !this.allowPlayerMovement;
- }
-
-
- standardPlayer.sp_Core.allowEventMovement = true;
- standardPlayer.sp_Core.aliasEventSelfMovement = Game_Event.prototype.updateSelfMovement;
 
  Game_Event.prototype.canMove = function(){
      return standardPlayer.sp_Core.allowEventMovement;
@@ -167,8 +159,32 @@ Scene_MenuBase.prototype.update = function(){
         standardPlayer.sp_Core.aliasEventSelfMovement.call(this);
  }
 
+ standardPlayer.sp_Core.togglePlayerMovement = function(canMove){
+    this.allowPlayerMovement = arguments.length > 0 ? 
+    canMove:
+    !this.allowPlayerMovement;
+ }
+
  standardPlayer.sp_Core.toggleEventMovement = function(canMove){
     this.allowEventMovement = arguments.length > 0 ? 
     canMove:
     !this.allowEventMovement;
+ }
+
+
+/* ===================================================================================================
+        Input Handlers
+ ===================================================================================================*/ 
+
+ standardPlayer.sp_Core.inputCache = JSON.parse(JSON.stringify(Input.keyMapper));
+
+ standardPlayer.sp_Core.toggleAction = function(action, enable){
+    let keys = Object.keys(Input.keyMapper);
+    let vals = Object.values(Input.keyMapper);
+
+    let searchKey = enable ? 'temp' + action : action;
+    for(i in keys){
+        if(vals[i] == searchKey)
+            Input.keyMapper[keys[i]] = enable ? action : 'temp' + action; 
+    }
  }

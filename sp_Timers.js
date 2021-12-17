@@ -6,6 +6,18 @@ standardPlayer.sp_Timers = standardPlayer.sp_Timers || {timers:[], active:true};
 
 standardPlayer.sp_Timers.Parameters = PluginManager.parameters('standardPlayer.sp_Timer');
 
+standardPlayer.sp_Timers.createTimer = function(length, ...cb){
+    let timer = new sp_Timer(length, cb);
+    
+    this.addTimer(timer)
+    return timer;
+}
+
+standardPlayer.sp_Timers.addTimer = function(timer){
+    this.timers.push(timer);
+    this.active = true;
+}
+
 standardPlayer.sp_Timers.run = function(){
     let timers = [];
     let list = this.timers;
@@ -26,6 +38,8 @@ standardPlayer.sp_Timers.run = function(){
     }
 
     this.timers = timers;
+    if(!timers.length)
+        this.active = false;
 }
 
 standardPlayer.sp_Core.addBaseUpdate(()=>{
@@ -40,13 +54,14 @@ standardPlayer.sp_Core.addBaseUpdate(()=>{
  ===================================================================================================*/ 
 
 class sp_Timer{
-    constructor(time, ...args){ //time, ...callback/s
+    constructor(time, 
+        args){ //time, ...callback/s
         this.tick = 0;
         this.target = time;
         this.callbacks = args || [];
         this.kill = false;
         this.repeat = 0;
-        this.pause = false;
+        this.pause = true;
         this.completed = false;
         this.runCondition = () => {return true};
         this.completeCondition = () => {return true};
@@ -54,14 +69,17 @@ class sp_Timer{
 
     setRunCondition(cb){
         this.runCondition = cb;
+        return this;
     }
 
     setCompleteCondition(cb){
         this.completeCondition = cb;
+        return this;
     }
 
     setRepeat(numberOfTimes){
         this.repeat = numberOfTimes;
+        return this;
     }
 
     run(){
@@ -72,11 +90,25 @@ class sp_Timer{
     }
 
     runCompleted(){
-        console.log(this)
-        this.completed = true;
         if(this.completeCondition()){
             this.callbacks.forEach(cb => cb())
+            this.checkRepeat()
         }
+
+        
+    }
+
+    checkRepeat(){
+        if(this.repeat--){
+            this.tick = 0;
+        } else {
+            this.completed = true;
+        }
+    }
+
+    activate(){
+        this.pause = false;
+        return this;
     }
 
 }

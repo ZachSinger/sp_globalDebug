@@ -107,6 +107,9 @@ class sp_Action{
         this.index = 0;
         this.tick = 0;
         this.active = false;
+        this.repeat = [0];
+        this.repeatCache = [0]
+        this.masterRepeat = 0;
     }
 
     step(){
@@ -144,6 +147,47 @@ class sp_Action{
         return this;
     }
 
+    setRepeat(numberOfTimes){
+        this.repeat[this.index] = numberOfTimes;
+        return this;
+    }
+
+    setMasterRepeat(numberOfTimes){
+        this.masterRepeat = numberOfTimes;
+        return this;
+    }
+
+    getRepeat(){
+        return this.repeat[this.index];
+    }
+
+
+    checkRepeat(){
+        if(this.masterRepeat <= -1 || this.masterRepeat--){
+            this.tick = 0;
+            this.index = 0;
+            this.resetForRepeat();
+        } 
+    }
+
+    checkStepRepeat(){
+        if(this.getRepeat() === -1 || this.repeat[this.index]--){
+            this.tick = 0;
+            return true;
+        }
+
+        return false;
+    }
+
+    resetForRepeat(){
+        let list = this.steps;
+        let length = list.length;
+
+        for(let i = 0; i < length; i++){
+            this.repeat[i] = this.repeatCache[i];
+        }
+    }
+
     getPositionData(){
         let step = this.steps[this.index - 1]
         let keys = Object.keys(step);
@@ -178,12 +222,15 @@ class sp_Action{
 
     isCompletedStep(){
         if(this.tick + 1 >= this.currentDur()){
+            if(this.checkStepRepeat())
+                return false;
             this.index++;
             this.tick = 0;
             this.updateCache();
             return true;
         }
-            
+
+        return false;
     }
 
     updateCache(){
@@ -208,6 +255,8 @@ class sp_Action{
 
     then(){
         this.index++;
+        this.repeat.push(0);
+        this.repeatCache.push(0);
         return this;
     }
 

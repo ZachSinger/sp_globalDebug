@@ -167,7 +167,9 @@ class sp_Action{
             this.tick = 0;
             this.index = 0;
             this.resetForRepeat();
+            return true
         } 
+        return false;
     }
 
     checkStepRepeat(){
@@ -217,7 +219,7 @@ class sp_Action{
     }
 
     isCompleted(){
-        return this.index < this.steps.length && this.isCompletedStep() && this.index >= this.steps.length;
+        return this.index < this.steps.length && this.isCompletedStep() && this.index >= this.steps.length && !this.checkRepeat();
     }
 
     isCompletedStep(){

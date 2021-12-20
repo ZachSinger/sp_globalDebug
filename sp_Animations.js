@@ -147,8 +147,24 @@ class sp_Action{
         return this;
     }
 
+    setScale(x, y, dur, pad){
+        let cache = this.index ? this.getPositionData() : this.animation.initalCache;
+        let profile = {
+                scale: {
+                    'x': standardPlayer.sp_Core.plotLinearPath(cache['scale'].x, x, dur, pad),
+                    'y': standardPlayer.sp_Core.plotLinearPath(cache['scale'].y, y, dur, pad),
+                }
+        }
+
+        this.steps[this.index] = Object.assign({}, this.step(), profile);
+
+        this.dur[this.index] = dur;
+        return this;
+    }
+
     setRepeat(numberOfTimes){
         this.repeat[this.index] = numberOfTimes;
+        this.repeatCache[this.index] = numberOfTimes;
         return this;
     }
 
@@ -214,7 +230,12 @@ class sp_Action{
         let index = ++this.tick;
 
         for(let i = 0; i < length; i++){
-            this.target()[props[i]] = paths[i][index];
+            if(props[i] === 'scale'){
+                this.updateScale(target, paths[i], index)
+            } else {
+                target[props[i]] = paths[i][index];
+            }
+            
         }
     }
 
@@ -247,6 +268,11 @@ class sp_Action{
         }
 
         this.animation.currentPosition = props;
+    }
+
+    updateScale(target, props, index){
+        
+        target.scale.set(props.x[index], props.y[index])
     }
 
     activate(){

@@ -137,6 +137,20 @@ class sp_Action{
         return this;
     }
 
+    moveXYRel(x, y, dur, pad){
+        let cache = this.index ? this.getPositionData() : this.animation.initalCache;
+        let curX = cache['x'];
+        let curY = cache['y'];
+        let profile = {
+            'x': standardPlayer.sp_Core.plotLinearPath(cache['x'], curX + x, dur, pad),
+            'y': standardPlayer.sp_Core.plotLinearPath(cache['y'], curY + y, dur, pad)
+        }
+        this.steps[this.index] = Object.assign({}, this.step(), profile);
+
+        this.dur[this.index] = dur;
+        return this;
+    }
+
     setRotation(value, dur, pad){
         let cache = this.index ? this.getPositionData() : this.animation.initalCache;
         let profile = {
@@ -354,9 +368,15 @@ class sp_Action{
 function testScript(){
     window.grph = new PIXI.Graphics();grph.beginFill(0xFFFFFF);grph.drawRect(0, 0, 100, 100);
     SceneManager._scene.addChild(grph)
-    let anim = standardPlayer.sp_Animations.createAnimation(grph);
-    let action = anim.action(0).moveXY(100, 100, 100, 0).then().setCustomProp("tint", 300, 100, 0).setMasterRepeat(1);
-
+    let anim = standardPlayer.sp_Animations.createAnimation(grph)
+                .action(0)
+                .moveXY(Graphics.width * .4, Graphics.height * .5, 30, 0)
+                .then()
+                .moveXYRel(100, 100, 100, 0)
+                .then()
+                .moveXYRel(200, 50, 30, 0)
+                .then()
+                .moveXYRel(100, -50, 100, 0);
     
     anim.activate();
 }

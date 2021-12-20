@@ -71,7 +71,8 @@ class spAnimation {
            'width': target.width,
            'height': target.height,
            'scale': target.scale,
-           'alpha': target.alpha
+           'alpha': target.alpha,
+           'rotation': target.rotation
         }
         
         return props;
@@ -129,6 +130,17 @@ class sp_Action{
         let profile = {
             'x': standardPlayer.sp_Core.plotLinearPath(cache['x'], x, dur, pad),
             'y': standardPlayer.sp_Core.plotLinearPath(cache['y'], y, dur, pad)
+        }
+        this.steps[this.index] = Object.assign({}, this.step(), profile);
+
+        this.dur[this.index] = dur;
+        return this;
+    }
+
+    setRotation(value, dur, pad){
+        let cache = this.index ? this.getPositionData() : this.animation.initalCache;
+        let profile = {
+            'rotation': standardPlayer.sp_Core.plotLinearPath(cache['rotation'], value, dur, pad)
         }
         this.steps[this.index] = Object.assign({}, this.step(), profile);
 

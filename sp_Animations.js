@@ -159,6 +159,34 @@ class sp_Action{
         return this;
     }
 
+    setDimensions(width, height, dur, pad){
+        this.setWidth(width, dur, pad)
+        this.setHeight(height, dur, pad)
+        return this;
+    }
+
+    setWidth(value, dur, pad){
+        let cache = this.index ? this.getPositionData() : this.animation.initalCache;
+        let profile = {
+            'width': standardPlayer.sp_Core.plotLinearPath(cache['width'], value, dur, pad)
+        }
+        this.steps[this.index] = Object.assign({}, this.step(), profile);
+
+        this.dur[this.index] = dur;
+        return this;
+    }
+
+    setHeight(value, dur, pad){
+        let cache = this.index ? this.getPositionData() : this.animation.initalCache;
+        let profile = {
+            'height': standardPlayer.sp_Core.plotLinearPath(cache['height'], value, dur, pad)
+        }
+        this.steps[this.index] = Object.assign({}, this.step(), profile);
+
+        this.dur[this.index] = dur;
+        return this;
+    }
+
     setScale(x, y, dur, pad){
         let cache = this.index ? this.getPositionData() : this.animation.initalCache;
         let profile = {

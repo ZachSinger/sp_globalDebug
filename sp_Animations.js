@@ -235,6 +235,34 @@ class sp_Action{
         return this;
     }
 
+    resetPosition(dur, pad){
+        let cache = this.index ? this.getPositionData() : this.animation.initalCache;
+        let props = Object.keys(cache);
+        let values = Object.values(cache);
+        let length = props.length;
+        let target = this.target();
+        let initial = this.animation.initalCache;
+        let profile = {};
+        let current = {};
+
+        console.log(this.index)
+        console.log(cache)
+        console.log(initial)
+        for(let i = 0; i < length; i++){
+            current = props[i];
+            if(current == 'scale'){
+                this.setScale(values[i].x, values[i].y, dur, pad)
+            } else {
+                profile[current] = standardPlayer.sp_Core.plotLinearPath(cache[current], initial[current], dur, pad)
+            }
+        }
+
+        this.steps[this.index] = Object.assign({}, this.step(), profile);
+
+        this.dur[this.index] = dur;
+        return this;
+    }
+
     setRepeat(numberOfTimes){
         this.repeat[this.index] = numberOfTimes;
         this.repeatCache[this.index] = numberOfTimes;
@@ -376,7 +404,16 @@ function testScript(){
                 .then()
                 .moveXYRel(200, 50, 30, 0)
                 .then()
-                .moveXYRel(100, -50, 100, 0);
+                .moveXYRel(100, -50, 100, 0)
+                .then()
+                .resetPosition(100, 0);
     
     anim.activate();
+    return anim
 }
+
+
+
+
+
+

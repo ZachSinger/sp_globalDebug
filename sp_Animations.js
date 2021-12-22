@@ -45,7 +45,7 @@ standardPlayer.sp_Animations.playAction = function (action) {
     if (action.isCompleted()) {
         console.log('action completed')
         action.active = false;
-    } else if (action.active) {
+    } else if (action.active && action.passesRunConditions()) {
         action.play();
     }
 }
@@ -101,6 +101,10 @@ class spAnimation {
 
 }
 
+/* ===================================================================================================
+        sp_Action Class
+ ===================================================================================================*/
+
 class sp_Action {
     constructor(animation) {
         this.animation = animation;
@@ -112,6 +116,8 @@ class sp_Action {
         this.repeat = [0];
         this.repeatCache = [0]
         this.masterRepeat = 0;
+        this.runCondition = [() => { return true }];
+        this.masterRunCondition = () => { return true };
     }
 
     step() {
@@ -272,6 +278,16 @@ class sp_Action {
         return this;
     }
 
+    setRunCondition(cb) {
+        this.runCondition[this.index] = cb;
+        return this;
+    }
+
+    setMasterRunCondition(cb) {
+        this.masterRunCondition = cb;
+        return this;
+    }
+
     setRepeat(numberOfTimes) {
         this.repeat[this.index] = numberOfTimes;
         this.repeatCache[this.index] = numberOfTimes;
@@ -316,6 +332,14 @@ class sp_Action {
         }
     }
 
+    getRunCondition() {
+        return this.runCondition[this.index];
+    }
+
+    passesRunConditions() {
+        return this.getRunCondition()() && this.masterRunCondition()
+    }
+
     getPositionData() {
         let step = this.steps[this.index - 1]
         let keys = Object.keys(step);
@@ -354,6 +378,7 @@ class sp_Action {
             }
 
         }
+
     }
 
     isCompleted() {
@@ -403,6 +428,7 @@ class sp_Action {
         this.repeat.push(0);
         this.repeatCache.push(0);
         this.steps[this.index] = this.getPositionData()
+        this.runCondition.push(() => { return true })
         return this;
     }
 
@@ -413,21 +439,26 @@ class sp_Action {
 function testScript() {
     window.grph = new PIXI.Graphics(); grph.beginFill(0xFFFFFF); grph.drawRect(0, 0, 100, 100);
     SceneManager._scene.addChild(grph)
-    let anim = standardPlayer.sp_Animations.createAnimation(grph)
+    let anim = standardPlayer.sp_Animations.createAnimation(grph);
+    anim
         .action(0)
         .moveXY(Graphics.width * .4, Graphics.height * .5, 30, 0)
         .setScale(1.4, 2.1, 30)
         .then()
         .moveXYRel(100, 100, 100, 0)
         .setScale(.8, 1.1, 100)
+        .setRunCondition(() => { return $gamePlayer.y == 7 })
         .then()
         .moveXYRel(200, 50, 30, 0)
         .setScale(2.4, 3.1, 30)
         .then()
+        .setRunCondition(() => { return $gamePlayer.y == 8 })
         .moveXYRel(100, -50, 100, 0)
         .setScale(4.4, 3.5, 100)
         .then()
-        .resetPosition(100, 0);
+        .setRunCondition(() => { return $gamePlayer.y == 9 })
+        .resetPosition(100, 0)
+        
 
     anim.activate();
     return anim

@@ -28,7 +28,7 @@ standardPlayer.sp_Animations.run = function () {
     let list = this.animations;
     let length = list.length;
 
-    console.log('running animations master')
+    // console.log('running animations master')
 
     for (let i = 0; i < length; i++) {
         this.runActions(list[i])
@@ -232,17 +232,15 @@ class sp_Action {
         return this;
     }
 
-    setWait(dur) {
-        let profile = {
-            'wait': dur
-        }
+    setWait(value) {
+        let step = this.template();
 
-        console.log('calling set wait')
-        console.log(this.steps[this.index])
-        this.steps[this.index] = Object.assign({}, this.step(), profile);
-        console.log(this.steps[this.index])
-        this.dur[this.index] = dur;
-        return this.then();
+        step.wait = value
+
+        // this.dur[this.index] = dur;
+        // this.pad[this.index] = pad;
+        this.then();
+        return this;
     }
 
     resetPosition(dur, pad) {
@@ -256,12 +254,12 @@ class sp_Action {
 
     prepareStep() {
         let template = this.template();
-        let positionData = this.getPositionData();
         let keys = Object.keys(template)
         let length = keys.length;
         let step = this.step();
         let current;
 
+        // if(keys[0] == 'wait')
         for (let i = 0; i < length; i++) {
             current = keys[i];
             if(current == 'scale'){
@@ -386,12 +384,18 @@ class sp_Action {
     }
 
     hasWait() {
-        let step = this.step();
+        let step = this.template();
 
-        if (step.wait) {
+        if (typeof step.wait != 'undefined') {          
             if (step.wait-- > 0) {
+                
                 return true;
             }
+            
+            this.index++;
+            this.tick = 0;
+            this.updateCache();
+            
         }
         return false;
     }
@@ -485,7 +489,7 @@ function testScript() {
         .then()
         .setRotation(10, 100, 0)
         .then()
-        // .setWait(100)
+        .setWait(100)
         .moveXYRel(100, 100, 100, 0)
         .setScale(.8, 1.1, 100, 0)
         .then()

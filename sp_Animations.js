@@ -153,8 +153,8 @@ class sp_Action {
         let cache = this.getPositionData();
         let step = this.template();
 
-        step.x = cache.x + x;
-        step.y = cache.y + y;
+        step.x = this.getLastPropValue('x') + x;
+        step.y = this.getLastPropValue('y') + y;
 
         this.dur[this.index] = dur;
         this.pad[this.index] = pad;
@@ -246,30 +246,12 @@ class sp_Action {
     }
 
     resetPosition(dur, pad) {
-        let cache = this.getPositionData()
-        let props = Object.keys(cache);
-        let values = Object.values(cache);
-        let length = props.length;
-        let target = this.target();
-        let initial = this.animation.initialCache;
-        let profile = {};
-        let current = {};
+        let step = this.template();
 
-        console.log('calling reset position==================================')
-        for (let i = 0; i < length; i++) {
-            current = props[i];
-            if (current == 'scale') {
-                console.log(values[i])
-                this.setScale(initial.scale.x, initial.scale.y, dur, pad)
-            } else {
-                profile[current] = standardPlayer.sp_Core.plotLinearPath(cache[current], initial[current], dur, pad)
-            }
-        }
-
-        this.steps[this.index] = Object.assign({}, this.step(), profile);
-        console.log(this.steps[this.index])
+        this.stepTemplate[this.index] = Object.assign({}, this.animation.initialCache);
         this.dur[this.index] = dur;
-        return this;
+        this.pad[this.index] = pad;
+        return this
     }
 
     prepareStep() {
@@ -299,9 +281,6 @@ class sp_Action {
                 )
                 continue
             }
-            console.log(step[current])
-            console.log(this.getLastPropValue(current))
-            console.log(template[current])
             
             step[current] = standardPlayer.sp_Core.plotLinearPath
                 (
@@ -481,11 +460,12 @@ class sp_Action {
     }
 
     then() {
+        this.prepareStep()
         this.index++;
         this.repeat.push(0);
         this.repeatCache.push(0);
         this.steps[this.index] = {}//this.getPositionData()
-        this.stepTemplate[this.index] = Object.assign({}, this.stepTemplate[this.index - 1]);
+        this.stepTemplate[this.index] = {}//Object.assign({}, this.stepTemplate[this.index - 1]);
         this.runCondition.push(() => { return true })
         return this;
     }
@@ -500,22 +480,25 @@ function testScript() {
     let anim = standardPlayer.sp_Animations.createAnimation(grph);
     anim
         .action(0)
-        .moveXY(Graphics.width * .4, Graphics.height * .5, 30, 0)
-        .setScale(1.4, 2.1, 30)
+        .moveXY(Graphics.width * .4, Graphics.height * .5, 100, 0)
+        .setScale(1.4, 2.1, 100, 0)
         .then()
         .setRotation(10, 100, 0)
         .then()
         // .setWait(100)
         .moveXYRel(100, 100, 100, 0)
-        .setScale(.8, 1.1, 100)
+        .setScale(.8, 1.1, 100, 0)
         .then()
         .moveXYRel(200, 50, 30, 0)
-        .setScale(2.4, 3.1, 30)
+        .setScale(2.4, 3.1, 30, 0)
         .then()
-        // .setRotation(14, 100, 0)
+        .setRotation(14, 100, 0)
         .moveXYRel(100, -50, 100, 0)
-        .setScale(4.4, 3.5, 100)
+        .setScale(4.4, 3.5, 100, 0)
+        .then()
         
+        .resetPosition(100, 0)
+        .prepareStep();
         
 
     // anim

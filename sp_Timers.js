@@ -54,8 +54,7 @@ standardPlayer.sp_Core.addBaseUpdate(()=>{
  ===================================================================================================*/ 
 
 class sp_Timer{
-    constructor(time, 
-        args){ //time, ...callback/s
+    constructor(time, args){ //time, ...callback/s
         this.tick = 0;
         this.target = time;
         this.callbacks = args || [];

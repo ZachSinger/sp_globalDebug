@@ -1,7 +1,7 @@
 var Imported = Imported || {};
 Imported.sp_Core = 'sp_Core';
 
-var standardPlayer = standardPlayer || {params: {}};
+var standardPlayer = standardPlayer || { params: {} };
 standardPlayer.sp_Core = standardPlayer.sp_Core || {};
 
 standardPlayer.sp_Core.Parameters = PluginManager.parameters('standardPlayer.sp_Core');
@@ -9,89 +9,89 @@ standardPlayer.sp_Core.Parameters = PluginManager.parameters('standardPlayer.sp_
 
 /* ===================================================================================================
         Update Handlers
- ===================================================================================================*/ 
+ ===================================================================================================*/
 standardPlayer.sp_Core.updateContainer = {
-    _sceneBaseUpdatesPre:[],
-    _sceneMenuUpdatesPre:[],
-    _sceneMapUpdatesPre:[],
-    _sceneBaseUpdatesPost:[],
-    _sceneMenuUpdatesPost:[],
-    _sceneMapUpdatesPost:[]
+    _sceneBaseUpdatesPre: [],
+    _sceneMenuUpdatesPre: [],
+    _sceneMapUpdatesPre: [],
+    _sceneBaseUpdatesPost: [],
+    _sceneMenuUpdatesPost: [],
+    _sceneMapUpdatesPost: []
 }
 
 standardPlayer.sp_Core._aliasSceneBase = Scene_Base.prototype.update;
 standardPlayer.sp_Core._aliasSceneMenu = Scene_MenuBase.prototype.update;
 standardPlayer.sp_Core._aliasSceneMap = Scene_Map.prototype.update;
 
-standardPlayer.sp_Core.addBaseUpdate = function(method, post, index){
-    let updates = post ? 
-    this.updateContainer._sceneBaseUpdatesPost:
-    this.updateContainer._sceneBaseUpdatesPre;
-    
+standardPlayer.sp_Core.addBaseUpdate = function (method, post, index) {
+    let updates = post ?
+        this.updateContainer._sceneBaseUpdatesPost :
+        this.updateContainer._sceneBaseUpdatesPre;
+
     this.addUpdate(updates, method, index)
 }
 
-standardPlayer.sp_Core.addMapUpdate = function(method, post, index){
+standardPlayer.sp_Core.addMapUpdate = function (method, post, index) {
     console.log(this === standardPlayer)
     console.log(this === standardPlayer.sp_Core)
-    let updates = post ? 
-    this.updateContainer._sceneMapUpdatesPost:
-    this.updateContainer._sceneMapUpdatesPre;
-    
-    this.addUpdate(updates, method, index)
-}
-
-standardPlayer.sp_Core.addMenuUpdate = function(method, post, index){
-    let updates = post ? 
-    this.updateContainer._sceneMenuUpdatesPre:
-    this.updateContainer._sceneMenuUpdatesPost;
+    let updates = post ?
+        this.updateContainer._sceneMapUpdatesPost :
+        this.updateContainer._sceneMapUpdatesPre;
 
     this.addUpdate(updates, method, index)
 }
 
-standardPlayer.sp_Core.addUpdate = function(location, method, index){
-    
-    index = typeof index !== 'undefined' ? 
-        arguments[1] <= location.length ? 
-            arguments[1] : 
-                location.length : 
+standardPlayer.sp_Core.addMenuUpdate = function (method, post, index) {
+    let updates = post ?
+        this.updateContainer._sceneMenuUpdatesPre :
+        this.updateContainer._sceneMenuUpdatesPost;
+
+    this.addUpdate(updates, method, index)
+}
+
+standardPlayer.sp_Core.addUpdate = function (location, method, index) {
+
+    index = typeof index !== 'undefined' ?
+        arguments[1] <= location.length ?
+            arguments[1] :
+            location.length :
         location.length;
 
     location.splice(index, 0, method);
 }
 
-standardPlayer.sp_Core.removeBaseUpdate = function(method, post){
+standardPlayer.sp_Core.removeBaseUpdate = function (method, post) {
     let updates = post ?
-    '_sceneBaseUpdatesPost':
-    '_sceneBaseUpdatesPre';
-    
-    this.removeUpdate(updates, method)
-}
-
-standardPlayer.sp_Core.removeMapUpdate = function(method, post){
-    let updates = post ?
-    '_sceneMapUpdatesPost':
-    '_sceneMapUpdatesPre';
+        '_sceneBaseUpdatesPost' :
+        '_sceneBaseUpdatesPre';
 
     this.removeUpdate(updates, method)
 }
 
-standardPlayer.sp_Core.removeMenuUpdate = function(method, post){
+standardPlayer.sp_Core.removeMapUpdate = function (method, post) {
     let updates = post ?
-    '_sceneMenuUpdatesPost':
-    '_sceneMenuUpdatesPre';
+        '_sceneMapUpdatesPost' :
+        '_sceneMapUpdatesPre';
 
     this.removeUpdate(updates, method)
 }
 
-standardPlayer.sp_Core.removeUpdate = function(locationName, method){
+standardPlayer.sp_Core.removeMenuUpdate = function (method, post) {
+    let updates = post ?
+        '_sceneMenuUpdatesPost' :
+        '_sceneMenuUpdatesPre';
+
+    this.removeUpdate(updates, method)
+}
+
+standardPlayer.sp_Core.removeUpdate = function (locationName, method) {
     let location = this.updateContainer[locationName];
-    
+
     this.updateContainer[locationName] = location.filter(item => item != method);
-    
+
 }
 
-Scene_Base.prototype.update = function(){
+Scene_Base.prototype.update = function () {
     standardPlayer.sp_Core.updateContainer._sceneBaseUpdatesPre.forEach(
         item => item()
     )
@@ -104,7 +104,7 @@ Scene_Base.prototype.update = function(){
 }
 
 
-Scene_Map.prototype.update = function(){
+Scene_Map.prototype.update = function () {
     let thisObject = this;
 
     standardPlayer.sp_Core.updateContainer._sceneMapUpdatesPre.forEach(
@@ -118,7 +118,7 @@ Scene_Map.prototype.update = function(){
     )
 }
 
-Scene_MenuBase.prototype.update = function(){
+Scene_MenuBase.prototype.update = function () {
     let thisObject = this;
 
     standardPlayer.sp_Core.updateContainer._sceneMenuUpdatesPre.forEach(
@@ -136,146 +136,158 @@ Scene_MenuBase.prototype.update = function(){
 
 /* ===================================================================================================
         Movement Handlers
- ===================================================================================================*/ 
+ ===================================================================================================*/
 
- standardPlayer.sp_Core.allowPlayerMovement = true;
- standardPlayer.sp_Core.allowEventMovement = true;
- standardPlayer.sp_Core.aliasPlayerCanMove = Game_Player.prototype.canMove;
- standardPlayer.sp_Core.aliasEventSelfMovement = Game_Event.prototype.updateSelfMovement;
+standardPlayer.sp_Core.allowPlayerMovement = true;
+standardPlayer.sp_Core.allowEventMovement = true;
+standardPlayer.sp_Core.aliasPlayerCanMove = Game_Player.prototype.canMove;
+standardPlayer.sp_Core.aliasEventSelfMovement = Game_Event.prototype.updateSelfMovement;
 
- Game_Player.prototype.canMove = function(){
-     if(standardPlayer.sp_Core.allowPlayerMovement)
+Game_Player.prototype.canMove = function () {
+    if (standardPlayer.sp_Core.allowPlayerMovement)
         return standardPlayer.sp_Core.aliasPlayerCanMove.call(this);
- }
+}
 
- Game_Event.prototype.canMove = function(){
-     return standardPlayer.sp_Core.allowEventMovement;
- }
+Game_Event.prototype.canMove = function () {
+    return standardPlayer.sp_Core.allowEventMovement;
+}
 
- Game_Event.prototype.updateSelfMovement = function(){
-     if(this.canMove())
+Game_Event.prototype.updateSelfMovement = function () {
+    if (this.canMove())
         standardPlayer.sp_Core.aliasEventSelfMovement.call(this);
- }
+}
 
- standardPlayer.sp_Core.togglePlayerMovement = function(canMove){
-    this.allowPlayerMovement = arguments.length > 0 ? 
-    canMove:
-    !this.allowPlayerMovement;
- }
+standardPlayer.sp_Core.togglePlayerMovement = function (canMove) {
+    this.allowPlayerMovement = arguments.length > 0 ?
+        canMove :
+        !this.allowPlayerMovement;
+}
 
- standardPlayer.sp_Core.toggleEventMovement = function(canMove){
-    this.allowEventMovement = arguments.length > 0 ? 
-    canMove:
-    !this.allowEventMovement;
- }
+standardPlayer.sp_Core.toggleEventMovement = function (canMove) {
+    this.allowEventMovement = arguments.length > 0 ?
+        canMove :
+        !this.allowEventMovement;
+}
 
 
 /* ===================================================================================================
         Input Handlers
- ===================================================================================================*/ 
+ ===================================================================================================*/
 
- standardPlayer.sp_Core.inputCache = JSON.parse(JSON.stringify(Input.keyMapper));
+standardPlayer.sp_Core.inputCache = JSON.parse(JSON.stringify(Input.keyMapper));
 
- standardPlayer.sp_Core.toggleAction = function(action, enable){
+standardPlayer.sp_Core.toggleAction = function (action, enable) {
     let keys = Object.keys(Input.keyMapper);
     let vals = Object.values(Input.keyMapper);
     let disabled = 'temp' + action;
     let process = typeof enable == 'undefined' ? 2 : enable ? 0 : 1;
 
-    for(i in keys){
-        if(process == 0){
+    for (i in keys) {
+        if (process == 0) {
             //enabled
-            if(vals[i] == disabled)
+            if (vals[i] == disabled)
                 Input.keyMapper[keys[i]] = action;
-        } else if(process == 1){
+        } else if (process == 1) {
             //disabled
-            if(vals[i] == action)
+            if (vals[i] == action)
                 Input.keyMapper[keys[i]] = disabled;
         } else {
             //toggled
-            if(vals[i] == disabled)
+            if (vals[i] == disabled)
                 Input.keyMapper[keys[i]] = action;
-            else if(vals[i] == action)
+            else if (vals[i] == action)
                 Input.keyMapper[keys[i]] = disabled;
         }
-        
-        
-    }
- }
 
- standardPlayer.sp_Core.toggleInput = function(enable){
+
+    }
+}
+
+standardPlayer.sp_Core.toggleInput = function (enable) {
     let vals = ["ok", "cancel", "shift", "control", "pageup", "pagedown", "up", "down", "right", "left", "tab", "escape"];
 
     this.toggleKeys(vals, enable);
- }
+}
 
- standardPlayer.sp_Core.toggleMovementKeys = function(enable){
+standardPlayer.sp_Core.toggleMovementKeys = function (enable) {
     let vals = ["up", "down", "left", "right"];
 
     this.toggleKeys(vals, enable);
- }
+}
 
- standardPlayer.sp_Core.toggleSelectKey = function(enable) {
+standardPlayer.sp_Core.toggleSelectKey = function (enable) {
     this.toggleKeys(["ok"], enable)
- }
+}
 
- standardPlayer.sp_Core.toggleKeys = function(vals, enable){
+standardPlayer.sp_Core.toggleKeys = function (vals, enable) {
     vals.forEach(item => this.toggleAction(item, enable));
- }
+}
 
 
- /* ===================================================================================================
-        Character Sprite tools
- ===================================================================================================*/ 
+/* ===================================================================================================
+       Character Sprite tools
+===================================================================================================*/
 
- standardPlayer.sp_Core.getCharactersSpriteset = function(){
+standardPlayer.sp_Core.getCharactersSpriteset = function () {
     return SceneManager._scene._spriteset.children[0].children[2].children;
- }
+}
 
- standardPlayer.sp_Core.getCharacterFromSpriteset = function(character){
+standardPlayer.sp_Core.getCharacterFromSpriteset = function (character) {
     let spriteset = this.getCharactersSpriteset();
 
-    for(sprite of spriteset){
-        if(sprite._character == character)
+    for (sprite of spriteset) {
+        if (sprite._character == character)
             character.sprite = sprite;
     }
- }
+}
 
- standardPlayer.sp_Core.setSpriteReferences = function(){
+standardPlayer.sp_Core.setSpriteReferences = function () {
     let evs = $gameMap.events().concat($gamePlayer._followers._data);
 
     evs.forEach(ev => standardPlayer.sp_Core.getCharacterFromSpriteset(ev))
- }
+}
 
- standardPlayer.sp_Core._aliasMapStart = Scene_Map.prototype.start;
- Scene_Map.prototype.start = function(){
-     standardPlayer.sp_Core.setSpriteReferences();
-     standardPlayer.sp_Core.getCharacterFromSpriteset($gamePlayer)
+standardPlayer.sp_Core._aliasMapStart = Scene_Map.prototype.start;
+Scene_Map.prototype.start = function () {
+    standardPlayer.sp_Core.setSpriteReferences();
+    standardPlayer.sp_Core.getCharacterFromSpriteset($gamePlayer)
 
-     standardPlayer.sp_Core._aliasMapStart.call(this)
- }
+    standardPlayer.sp_Core._aliasMapStart.call(this)
+}
 
 
 
- /* ===================================================================================================
-        Common Utility Functions
- ===================================================================================================*/ 
+/* ===================================================================================================
+       Common Utility Functions
+===================================================================================================*/
 
- standardPlayer.sp_Core.plotLinearPath = function(orig, dest, frames, pad){
+standardPlayer.sp_Core.plotLinearPath = function (orig, dest, frames, pad) {
     let dist = dest - orig;
     let inc = dist / frames;
     let result = [];
 
     pad = pad ? pad : 0;
-    for(let i = 0; i < pad; i++){
+    for (let i = 0; i < pad; i++) {
         result[i] = orig;
     }
 
 
     let length = result.length - 1;
-    for(let i = 1; i <= frames; i++){
+    for (let i = 1; i <= frames; i++) {
         result[length + i] = orig + inc * i
     }
 
     return result
- }
+}
+
+standardPlayer.sp_Core.retreiveFromList = function (list, condition) {
+    let length = list.length;
+
+    for (let i = 0; i < length; i++) {
+        if (condition(list[i])) {
+            return [i, list[i]]
+        }
+    }
+
+    return false;
+}

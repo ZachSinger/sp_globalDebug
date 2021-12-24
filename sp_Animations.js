@@ -145,6 +145,7 @@ class sp_Action {
     }
 
     moveXYRel(x, y, dur, pad) {
+        console.log('calling moveXYREL')
         let cache = this.index ? this.getPositionData() : this.animation.initalCache;
         let curX = cache['x'];
         let curY = cache['y'];
@@ -160,11 +161,25 @@ class sp_Action {
 
     setRotation(value, dur, pad) {
         let cache = this.index ? this.getPositionData() : this.animation.initalCache;
+        let rotation; 
+        if (typeof cache.rotation == 'undefined') {
+            console.log('no rotation on cache for this action, yet, using ')
+            rotation = this.animation.initalCache.rotation;
+        } else {
+            if(Array.isArray(cache.rotation)){
+                rotation = cache.rotation.slice(-1)[0];
+                
+            } else {
+                rotation = cache.rotation;
+                
+            }
+            
+        }
         let profile = {
-            'rotation': standardPlayer.sp_Core.plotLinearPath(cache['rotation'], value, dur, pad)
+            'rotation': standardPlayer.sp_Core.plotLinearPath(rotation, value, dur, pad)
         }
         this.steps[this.index] = Object.assign({}, this.step(), profile);
-
+        console.log(this.steps[this.index])
         this.dur[this.index] = dur;
         return this;
     }
@@ -210,17 +225,27 @@ class sp_Action {
 
     setScale(x, y, dur, pad) {
         let cache = this.index ? this.getPositionData() : this.animation.initalCache;
+        let ox, oy;
         console.log('calling set scale')
         if (typeof cache.scale == 'undefined') {
-            console.log('no scale on cache, creating')
-            console.log(cache)
-            cache.scale = this.animation.initalCache.scale
+            console.log('no scale on cache for this action, yet, using ')
+            ox = this.animation.initalCache.x;
+            oy = this.animation.initalCache.y;
+        } else {
+            if(Array.isArray(cache.scale.x)){
+                ox = cache.scale.x.slice(-1)[0];
+                oy = cache.scale.y.slice(-1)[0];
+            } else {
+                ox = cache.scale.x;
+                oy = cache.scale.y;
+            }
+            
         }
-        console.log(cache.scale)
+        console.log(`x:${ox}, y:${oy}`)
         let profile = {
             scale: {
-                'x': standardPlayer.sp_Core.plotLinearPath(cache['scale'].x, x, dur, pad),
-                'y': standardPlayer.sp_Core.plotLinearPath(cache['scale'].y, y, dur, pad),
+                'x': standardPlayer.sp_Core.plotLinearPath(ox, x, dur, pad),
+                'y': standardPlayer.sp_Core.plotLinearPath(oy, y, dur, pad),
             }
         }
 
@@ -251,6 +276,19 @@ class sp_Action {
         return this;
     }
 
+    setWait(dur){
+        let profile = {
+            'wait': dur
+        }
+
+        console.log('calling set wait')
+        console.log(this.steps[this.index])
+        this.steps[this.index] = Object.assign({}, this.step(), profile);
+        console.log(this.steps[this.index])
+        this.dur[this.index] = dur;
+        return this.then();
+    }
+
     resetPosition(dur, pad) {
         let cache = this.getPositionData()
         let props = Object.keys(cache);
@@ -270,7 +308,7 @@ class sp_Action {
             } else {
                 profile[current] = standardPlayer.sp_Core.plotLinearPath(cache[current], initial[current], dur, pad)
             }
-        }
+        } 
 
         this.steps[this.index] = Object.assign({}, this.step(), profile);
         console.log(this.steps[this.index])
@@ -346,20 +384,49 @@ class sp_Action {
         let values = Object.values(step);
         let index = values[0].length - 1;
         let obj = {};
-
+        
+        console.log('last position step data')
+        console.log(step)
         for (let i = 0; i < keys.length; i++) {
             if (keys[i] == 'scale') {
                 obj.scale = {};
-                console.log('found scale while getting postion data')
-                obj.scale.x = values[i].x[index]
-                obj.scale.y = values[i].y[index]
+                obj.scale.x = values[i].x//[index]
+                obj.scale.y = values[i].y//[index]
+                continue
+            } else if(keys[i] == 'wait'){
+                console.log('found wait, not including in position data')
                 continue
             }
-            obj[keys[i]] = values[i][index];
+
+            
+
+            if(Array.isArray(values[i])){
+                obj[keys[i]] = values[i].slice(-1)[0];
+            } else {
+                obj[keys[i]] = values[i];
+            }
+                
+                
+            
+            
         }
+
+        console.log('returning this position data')
+        console.log(obj)
 
         return obj
 
+    }
+
+    hasWait() {
+        let step = this.step();
+
+        if(step.wait){
+            if(step.wait-- > 0){
+                return true;
+            }
+        }
+        return false;
     }
 
     play() {
@@ -369,6 +436,9 @@ class sp_Action {
         let paths = Object.values(step);
         let length = props.length;
         let index = ++this.tick;
+
+        if(this.hasWait())
+            return;
 
         for (let i = 0; i < length; i++) {
             if (props[i] === 'scale') {
@@ -427,7 +497,7 @@ class sp_Action {
         this.index++;
         this.repeat.push(0);
         this.repeatCache.push(0);
-        this.steps[this.index] = this.getPositionData()
+        this.steps[this.index] = {}//this.getPositionData()
         this.runCondition.push(() => { return true })
         return this;
     }
@@ -445,20 +515,29 @@ function testScript() {
         .moveXY(Graphics.width * .4, Graphics.height * .5, 30, 0)
         .setScale(1.4, 2.1, 30)
         .then()
+        .setRotation(10, 100, 0)
+        .then()
+        // .setWait(100)
         .moveXYRel(100, 100, 100, 0)
         .setScale(.8, 1.1, 100)
-        .setRunCondition(() => { return $gamePlayer.y == 7 })
         .then()
         .moveXYRel(200, 50, 30, 0)
         .setScale(2.4, 3.1, 30)
         .then()
-        .setRunCondition(() => { return $gamePlayer.y == 8 })
+        // .setRotation(14, 100, 0)
         .moveXYRel(100, -50, 100, 0)
         .setScale(4.4, 3.5, 100)
         .then()
-        .setRunCondition(() => { return $gamePlayer.y == 9 })
         .resetPosition(100, 0)
         
+    // anim
+    //     .action(1)
+    //     .setRotation(15, 100, 0)
+    //     .then()
+    //     .setRotation(-15, 100, 0)
+    //     .then()
+    //     .resetPosition(100, 0)
+        // .setMasterRunCondition(()=>{return $gamePlayer.x == 8})
 
     anim.activate();
     return anim

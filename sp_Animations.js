@@ -236,17 +236,15 @@ class sp_Action {
         let step = this.template();
 
         step.wait = value
-
-        // this.dur[this.index] = dur;
-        // this.pad[this.index] = pad;
         this.then();
         return this;
     }
 
     resetPosition(dur, pad) {
         let step = this.template();
+        console.log('index: ' + this.index)
 
-        this.stepTemplate[this.index] = Object.assign({}, this.animation.initialCache);
+        step.resetPosition = true;
         this.dur[this.index] = dur;
         this.pad[this.index] = pad;
         return this
@@ -258,21 +256,22 @@ class sp_Action {
         let length = keys.length;
         let step = this.step();
         let current;
-
+        let cb = this.getLastPropValue;
+        
         // if(keys[0] == 'wait')
         for (let i = 0; i < length; i++) {
             current = keys[i];
             if(current == 'scale'){
                 step[current] = {x:[], y:[]}
                 step[current].x = standardPlayer.sp_Core.plotLinearPath(
-                    this.getLastPropValue('scale').x,
+                    cb.call(this, 'scale').x,
                     template[current].x,
                     this.dur[this.index],
                     this.pad[this.index]
                 )
 
                 step[current].y = standardPlayer.sp_Core.plotLinearPath(
-                    this.getLastPropValue('scale').y,
+                    cb.call(this, 'scale').y,
                     template[current].y,
                     this.dur[this.index],
                     this.pad[this.index]
@@ -282,7 +281,7 @@ class sp_Action {
             
             step[current] = standardPlayer.sp_Core.plotLinearPath
                 (
-                    this.getLastPropValue(current),
+                    cb.call(this, current),
                     template[current],
                     this.dur[this.index],
                     this.pad[this.index]
@@ -290,6 +289,49 @@ class sp_Action {
         }
         return this
     }
+
+    plotResetPath(){
+        let template = this.animation.initialCache;
+        let keys = Object.keys(template)
+        let length = keys.length;
+        let step = this.step();
+        let current;
+        
+        // if(keys[0] == 'wait')
+        console.log('running reset path')
+        console.log(this.index)
+        for (let i = 0; i < length; i++) {
+            current = keys[i];
+            if(current == 'scale'){
+                step[current] = {x:[], y:[]}
+                step[current].x = standardPlayer.sp_Core.plotLinearPath(
+                    this.target().scale.x,
+                    template[current].x,
+                    this.dur[this.index],
+                    this.pad[this.index]
+                )
+
+                step[current].y = standardPlayer.sp_Core.plotLinearPath(
+                    this.target().scale.y,
+                    template[current].y,
+                    this.dur[this.index],
+                    this.pad[this.index]
+                )
+                continue
+            }
+            
+            step[current] = standardPlayer.sp_Core.plotLinearPath
+                (
+                    this.target()[current],
+                    template[current],
+                    this.dur[this.index],
+                    this.pad[this.index]
+                )
+        }
+        return this
+    }
+
+   
 
     setRunCondition(cb) {
         this.runCondition[this.index] = cb;
@@ -375,12 +417,16 @@ class sp_Action {
         return this.animation.initialCache[prop]
     }
 
-    getLastSubPropValue(obj, prop){
-        let templates = this.stepTemplate;
-        for(let i = this.index; i >= 0; i--){
-            if(typeof templates[i][obj] != 'undefined')
-                return 
+
+    isResetPosition() {
+        let step = this.template();
+
+        if(step.resetPosition){
+            step.resetPosition = false
+            return true
         }
+
+        return false;
     }
 
     hasWait() {
@@ -410,6 +456,15 @@ class sp_Action {
 
         if (this.hasWait())
             return;
+
+        if (this.isResetPosition()){
+            this.plotResetPath()
+            step = this.step()
+            props = Object.keys(step);
+            paths = Object.values(step);
+            length = props.length;
+
+        }
 
         for (let i = 0; i < length; i++) {
             if (props[i] === 'scale') {
@@ -487,8 +542,8 @@ function testScript() {
         .moveXY(Graphics.width * .4, Graphics.height * .5, 100, 0)
         .setScale(1.4, 2.1, 100, 0)
         .then()
-        .setRotation(10, 100, 0)
-        .then()
+        // .setRotation(10, 100, 0)
+        // .then()
         .setWait(100)
         .moveXYRel(100, 100, 100, 0)
         .setScale(.8, 1.1, 100, 0)
@@ -496,23 +551,20 @@ function testScript() {
         .moveXYRel(200, 50, 30, 0)
         .setScale(2.4, 3.1, 30, 0)
         .then()
-        .setRotation(14, 100, 0)
+        // .setRotation(14, 100, 0)
         .moveXYRel(100, -50, 100, 0)
         .setScale(4.4, 3.5, 100, 0)
         .then()
-        
         .resetPosition(100, 0)
-        .prepareStep();
         
 
-    // anim
-    //     .action(1)
-    //     .setRotation(15, 100, 0)
-    //     .then()
-    //     .setRotation(-15, 100, 0)
-    //     .then()
-    //     .resetPosition(100, 0)
-    // .setMasterRunCondition(()=>{return $gamePlayer.x == 8})
+    anim
+        .action(1)
+        .setRotation(15, 100, 0)
+        .then()
+        .setRotation(-15, 100, 0)
+        .prepareStep()
+    
 
     anim.activate();
     return anim

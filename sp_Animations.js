@@ -19,6 +19,15 @@ standardPlayer.sp_Animations.createAnimation = function (target) {
     return anim;
 }
 
+standardPlayer.sp_Animations.reserveAnimation = function(url, cb) {
+    let stub = standardPlayer.sp_ImageCache.loadSprite(url, cb);
+
+    stub.retrieve().onCacheArgs = this.createAnimation(()=>{return stub.retrieve()})
+    // anim.reserved = true;
+    // this.addAnim(anim)
+    // return anim;
+}
+
 standardPlayer.sp_Animations.addAnim = function (anim) {
     this.animations.push(anim);
     this.active = true;
@@ -28,10 +37,10 @@ standardPlayer.sp_Animations.run = function () {
     let list = this.animations;
     let length = list.length;
 
-    console.log('running animations master')
+    // console.log('running animations master')
 
     for (let i = 0; i < length; i++) {
-        this.runActions(list[i])
+            this.runActions(list[i])
     }
 }
 
@@ -52,19 +61,31 @@ standardPlayer.sp_Animations.playAction = function (action) {
 
 class spAnimation {
     constructor(target) {
-        this.target = target;
-        this.cacheProps();
         this.actions = [];
         this.steps = [];
+        this.setTarget(target)
+        this.cacheProps();
+    }
+
+    target(){
+        return this._target;
+    }
+
+    setTarget(target){
+        if(typeof target == 'function'){
+            this.target = target;
+        } else {
+            this._target = target
+        }
     }
 
     cacheProps() {
-        this.initalCache = this.extractInitialProps();
+        this.initialCache = this.extractInitialProps();
         this.currentPosition = this.extractInitialProps();
     }
 
     extractInitialProps() {
-        let target = this.target;
+        let target = this.target();
         let props = {
             'x': target.x,
             'y': target.y,
@@ -77,6 +98,19 @@ class spAnimation {
         props.scale.x = target.scale._x;
         props.scale.y = target.scale._y;
         return props;
+    }
+
+    checkPreload(){
+        if(this.reserved){
+            if(this.isPreloaded){
+                return true
+            } else {
+                return false
+            }
+
+        } 
+            return true
+        
     }
 
     action(index) {
@@ -94,6 +128,20 @@ class spAnimation {
         return action;
     }
 
+    allComplete() {
+        let complete = true;
+        let list = this.actions;
+        let length = list.length;
+
+        for(let i = 0; i < length; i++){
+            if(list[i].active){
+                complete = false
+            }
+        }
+
+        return complete
+    }
+
     activate() {
         this.active = true;
         this.actions.forEach(action => action.activate())
@@ -108,8 +156,10 @@ class spAnimation {
 class sp_Action {
     constructor(animation) {
         this.animation = animation;
-        this.steps = [];
+        this.steps = [{}];
+        this.stepTemplate = [{}];
         this.dur = [];
+        this.pad = [];
         this.index = 0;
         this.tick = 0;
         this.active = false;
@@ -124,74 +174,58 @@ class sp_Action {
         return this.steps[this.index]
     }
 
+    template() {
+        return this.stepTemplate[this.index]
+    }
+
     currentDur() {
-        return this.dur[this.index]
+        return this.dur[this.index] + this.pad[this.index]
     }
 
     target() {
-        return this.animation.target;
+        return this.animation.target();
     }
 
     moveXY(x, y, dur, pad) {
-        let cache = this.index ? this.getPositionData() : this.animation.initalCache;
-        let profile = {
-            'x': standardPlayer.sp_Core.plotLinearPath(cache['x'], x, dur, pad),
-            'y': standardPlayer.sp_Core.plotLinearPath(cache['y'], y, dur, pad)
-        }
-        this.steps[this.index] = Object.assign({}, this.step(), profile);
+        let step = this.template();
+
+        step.x = x;
+        step.y = y;
 
         this.dur[this.index] = dur;
+        this.pad[this.index] = pad;
         return this;
     }
 
     moveXYRel(x, y, dur, pad) {
-        console.log('calling moveXYREL')
-        let cache = this.index ? this.getPositionData() : this.animation.initalCache;
-        let curX = cache['x'];
-        let curY = cache['y'];
-        let profile = {
-            'x': standardPlayer.sp_Core.plotLinearPath(cache['x'], curX + x, dur, pad),
-            'y': standardPlayer.sp_Core.plotLinearPath(cache['y'], curY + y, dur, pad)
-        }
-        this.steps[this.index] = Object.assign({}, this.step(), profile);
+        let step = this.template();
+
+        step.x = this.getLastPropValue('x') + x;
+        step.y = this.getLastPropValue('y') + y;
 
         this.dur[this.index] = dur;
+        this.pad[this.index] = pad;
         return this;
     }
 
     setRotation(value, dur, pad) {
-        let cache = this.index ? this.getPositionData() : this.animation.initalCache;
-        let rotation; 
-        if (typeof cache.rotation == 'undefined') {
-            console.log('no rotation on cache for this action, yet, using ')
-            rotation = this.animation.initalCache.rotation;
-        } else {
-            if(Array.isArray(cache.rotation)){
-                rotation = cache.rotation.slice(-1)[0];
-                
-            } else {
-                rotation = cache.rotation;
-                
-            }
-            
-        }
-        let profile = {
-            'rotation': standardPlayer.sp_Core.plotLinearPath(rotation, value, dur, pad)
-        }
-        this.steps[this.index] = Object.assign({}, this.step(), profile);
-        console.log(this.steps[this.index])
+        let step = this.template();
+
+        step.rotation = value;
+        
+
         this.dur[this.index] = dur;
+        this.pad[this.index] = pad;
         return this;
     }
 
     setAlpha(value, dur, pad) {
-        let cache = this.index ? this.getPositionData() : this.animation.initalCache;
-        let profile = {
-            'alpha': standardPlayer.sp_Core.plotLinearPath(cache['alpha'], value, dur, pad)
-        }
-        this.steps[this.index] = Object.assign({}, this.step(), profile);
+        let step = this.template();
+
+        step.alpha = value
 
         this.dur[this.index] = dur;
+        this.pad[this.index] = pad;
         return this;
     }
 
@@ -202,119 +236,149 @@ class sp_Action {
     }
 
     setWidth(value, dur, pad) {
-        let cache = this.index ? this.getPositionData() : this.animation.initalCache;
-        let profile = {
-            'width': standardPlayer.sp_Core.plotLinearPath(cache['width'], value, dur, pad)
-        }
-        this.steps[this.index] = Object.assign({}, this.step(), profile);
+        let step = this.template();
+
+        step.width = value
 
         this.dur[this.index] = dur;
+        this.pad[this.index] = pad;
         return this;
     }
 
     setHeight(value, dur, pad) {
-        let cache = this.index ? this.getPositionData() : this.animation.initalCache;
-        let profile = {
-            'height': standardPlayer.sp_Core.plotLinearPath(cache['height'], value, dur, pad)
-        }
-        this.steps[this.index] = Object.assign({}, this.step(), profile);
+        let step = this.template();
+
+        step.height = value
 
         this.dur[this.index] = dur;
+        this.pad[this.index] = pad;
         return this;
     }
 
     setScale(x, y, dur, pad) {
-        let cache = this.index ? this.getPositionData() : this.animation.initalCache;
-        let ox, oy;
-        console.log('calling set scale')
-        if (typeof cache.scale == 'undefined') {
-            console.log('no scale on cache for this action, yet, using ')
-            ox = this.animation.initalCache.x;
-            oy = this.animation.initalCache.y;
-        } else {
-            if(Array.isArray(cache.scale.x)){
-                ox = cache.scale.x.slice(-1)[0];
-                oy = cache.scale.y.slice(-1)[0];
-            } else {
-                ox = cache.scale.x;
-                oy = cache.scale.y;
-            }
-            
-        }
-        console.log(`x:${ox}, y:${oy}`)
-        let profile = {
-            scale: {
-                'x': standardPlayer.sp_Core.plotLinearPath(ox, x, dur, pad),
-                'y': standardPlayer.sp_Core.plotLinearPath(oy, y, dur, pad),
-            }
-        }
+        let step = this.template();
 
-        console.log(this.steps[this.index])
-        this.steps[this.index].scale = Object.assign({}, cache.scale, profile.scale);
-        console.log(this.step())
+        step.scale = {};
+        step.scale.x = x;
+        step.scale.y = y;
 
         this.dur[this.index] = dur;
+        this.pad[this.index] = pad;
         return this;
     }
 
     setCustomProp(prop, value, dur, pad) {
-        let cache = this.index ? this.getPositionData() : this.animation.initalCache;
-        let target = this.target();
-        if (typeof cache[prop] == 'undefined') {
-            console.log('initializing prop')
-            cache[prop] = target[prop];
-        }
+        let step = this.template();
 
-        let profile = {
-        }
+        step[prop] = value;
 
-        profile[prop] = standardPlayer.sp_Core.plotLinearPath(cache[prop], value, dur, pad)
-
-        this.steps[this.index] = Object.assign({}, this.step(), profile);
+        this.animation.initialCache[prop] = this.target()[prop]
 
         this.dur[this.index] = dur;
+        this.pad[this.index] = pad;
         return this;
     }
 
-    setWait(dur){
-        let profile = {
-            'wait': dur
-        }
+    setWait(value) {
+        let step = this.template();
 
-        console.log('calling set wait')
-        console.log(this.steps[this.index])
-        this.steps[this.index] = Object.assign({}, this.step(), profile);
-        console.log(this.steps[this.index])
-        this.dur[this.index] = dur;
-        return this.then();
+        step.wait = value
+        this.then();
+        return this;
     }
 
     resetPosition(dur, pad) {
-        let cache = this.getPositionData()
-        let props = Object.keys(cache);
-        let values = Object.values(cache);
-        let length = props.length;
-        let target = this.target();
-        let initial = this.animation.initalCache;
-        let profile = {};
-        let current = {};
+        let step = this.template();
+        console.log('index: ' + this.index)
 
-        console.log('calling reset position==================================')
-        for (let i = 0; i < length; i++) {
-            current = props[i];
-            if (current == 'scale') {
-                console.log(values[i])
-                this.setScale(initial.scale.x, initial.scale.y, dur, pad)
-            } else {
-                profile[current] = standardPlayer.sp_Core.plotLinearPath(cache[current], initial[current], dur, pad)
-            }
-        } 
-
-        this.steps[this.index] = Object.assign({}, this.step(), profile);
-        console.log(this.steps[this.index])
+        step.resetPosition = true;
         this.dur[this.index] = dur;
-        return this;
+        this.pad[this.index] = pad;
+        return this
     }
+
+    prepareStep() {
+        let template = this.template();
+        let keys = Object.keys(template)
+        let length = keys.length;
+        let step = this.step();
+        let current;
+        let cb = this.getLastPropValue;
+        
+        // if(keys[0] == 'wait')
+        for (let i = 0; i < length; i++) {
+            current = keys[i];
+            if(current == 'scale'){
+                step[current] = {x:[], y:[]}
+                step[current].x = standardPlayer.sp_Core.plotLinearPath(
+                    cb.call(this, 'scale').x,
+                    template[current].x,
+                    this.dur[this.index],
+                    this.pad[this.index]
+                )
+
+                step[current].y = standardPlayer.sp_Core.plotLinearPath(
+                    cb.call(this, 'scale').y,
+                    template[current].y,
+                    this.dur[this.index],
+                    this.pad[this.index]
+                )
+                continue
+            }
+            
+            step[current] = standardPlayer.sp_Core.plotLinearPath
+                (
+                    cb.call(this, current),
+                    template[current],
+                    this.dur[this.index],
+                    this.pad[this.index]
+                )
+        }
+        return this
+    }
+
+    plotResetPath(){
+        let template = this.animation.initialCache;
+        let keys = Object.keys(template)
+        let length = keys.length;
+        let step = this.step();
+        let current;
+        
+        // if(keys[0] == 'wait')
+        console.log('running reset path')
+        console.log(this.index)
+        for (let i = 0; i < length; i++) {
+            current = keys[i];
+            if(current == 'scale'){
+                step[current] = {x:[], y:[]}
+                step[current].x = standardPlayer.sp_Core.plotLinearPath(
+                    this.target().scale.x,
+                    template[current].x,
+                    this.dur[this.index],
+                    this.pad[this.index]
+                )
+
+                step[current].y = standardPlayer.sp_Core.plotLinearPath(
+                    this.target().scale.y,
+                    template[current].y,
+                    this.dur[this.index],
+                    this.pad[this.index]
+                )
+                continue
+            }
+            
+            step[current] = standardPlayer.sp_Core.plotLinearPath
+                (
+                    this.target()[current],
+                    template[current],
+                    this.dur[this.index],
+                    this.pad[this.index]
+                )
+        }
+        return this
+    }
+
+   
 
     setRunCondition(cb) {
         this.runCondition[this.index] = cb;
@@ -379,52 +443,52 @@ class sp_Action {
     }
 
     getPositionData() {
-        let step = this.steps[this.index - 1]
-        let keys = Object.keys(step);
-        let values = Object.values(step);
-        let index = values[0].length - 1;
-        let obj = {};
-        
-        console.log('last position step data')
-        console.log(step)
-        for (let i = 0; i < keys.length; i++) {
-            if (keys[i] == 'scale') {
-                obj.scale = {};
-                obj.scale.x = values[i].x//[index]
-                obj.scale.y = values[i].y//[index]
-                continue
-            } else if(keys[i] == 'wait'){
-                console.log('found wait, not including in position data')
-                continue
-            }
+        if (!this.index) {
+            console.log('return this.animation.initialCache')
+            console.log(this.animation.initialCache)
+            return this.animation.initialCache
+        }
+        else {
+            console.log('return this.stepTemplate[this.indedx - 1 ')
+            return this.stepTemplate[this.index - 1]
+        }
+    }
 
-            
-
-            if(Array.isArray(values[i])){
-                obj[keys[i]] = values[i].slice(-1)[0];
-            } else {
-                obj[keys[i]] = values[i];
-            }
-                
-                
-            
-            
+    getLastPropValue(prop) {
+        let templates = this.stepTemplate;
+        for(let i = this.index - 1; i >= 0; i--){
+            if(typeof templates[i][prop] != 'undefined')
+                return templates[i][prop]
         }
 
-        console.log('returning this position data')
-        console.log(obj)
+        return this.animation.initialCache[prop]
+    }
 
-        return obj
 
+    isResetPosition() {
+        let step = this.template();
+
+        if(step.resetPosition){
+            step.resetPosition = false
+            return true
+        }
+
+        return false;
     }
 
     hasWait() {
-        let step = this.step();
+        let step = this.template();
 
-        if(step.wait){
-            if(step.wait-- > 0){
+        if (typeof step.wait != 'undefined') {          
+            if (step.wait-- > 0) {
+                
                 return true;
             }
+            
+            this.index++;
+            this.tick = 0;
+            this.updateCache();
+            
         }
         return false;
     }
@@ -437,12 +501,21 @@ class sp_Action {
         let length = props.length;
         let index = ++this.tick;
 
-        if(this.hasWait())
+        if (this.hasWait())
             return;
+
+        if (this.isResetPosition()){
+            this.plotResetPath()
+            step = this.step()
+            props = Object.keys(step);
+            paths = Object.values(step);
+            length = props.length;
+
+        }
 
         for (let i = 0; i < length; i++) {
             if (props[i] === 'scale') {
-                this.updateScale(target, paths[i], index)
+                this.updateScale(paths[i], index)
             } else {
                 target[props[i]] = paths[i][index];
             }
@@ -482,9 +555,8 @@ class sp_Action {
         this.animation.currentPosition = props;
     }
 
-    updateScale(target, props, index) {
-
-        target.scale.set(props.x[index], props.y[index])
+    updateScale(props, index) {
+        this.target().scale.set(props.x[index], props.y[index])
     }
 
     activate() {
@@ -494,10 +566,12 @@ class sp_Action {
     }
 
     then() {
+        this.prepareStep()
         this.index++;
         this.repeat.push(0);
         this.repeatCache.push(0);
         this.steps[this.index] = {}//this.getPositionData()
+        this.stepTemplate[this.index] = {}//Object.assign({}, this.stepTemplate[this.index - 1]);
         this.runCondition.push(() => { return true })
         return this;
     }
@@ -507,42 +581,46 @@ class sp_Action {
 
 
 function testScript() {
-    window.grph = new PIXI.Graphics(); grph.beginFill(0xFFFFFF); grph.drawRect(0, 0, 100, 100);
-    SceneManager._scene.addChild(grph)
-    let anim = standardPlayer.sp_Animations.createAnimation(grph);
-    anim
+    // window.grph = new PIXI.Graphics(); grph.beginFill(0xFFFFFF); grph.drawRect(0, 0, 100, 100);
+    // SceneManager._scene.addChild(grph)
+    let result = standardPlayer.sp_Animations.reserveAnimation('pictures/Actor1_1', (anim)=>{
+        console.log('running callback')
+        console.log(anim)
+        SceneManager._scene.addChild(anim.target())
+        anim
         .action(0)
-        .moveXY(Graphics.width * .4, Graphics.height * .5, 30, 0)
-        .setScale(1.4, 2.1, 30)
+        .moveXY(Graphics.width * .4, Graphics.height * .5, 100, 0)
+        .setScale(1.4, 2.1, 100, 0)
         .then()
-        .setRotation(10, 100, 0)
-        .then()
-        // .setWait(100)
+        // .setRotation(10, 100, 0)
+        // .then()
+        .setWait(100)
         .moveXYRel(100, 100, 100, 0)
-        .setScale(.8, 1.1, 100)
+        .setScale(.8, 1.1, 100, 0)
         .then()
         .moveXYRel(200, 50, 30, 0)
-        .setScale(2.4, 3.1, 30)
+        .setScale(2.4, 3.1, 30, 0)
         .then()
         // .setRotation(14, 100, 0)
         .moveXYRel(100, -50, 100, 0)
-        .setScale(4.4, 3.5, 100)
+        .setScale(4.4, 3.5, 100, 0)
         .then()
         .resetPosition(100, 0)
         
-    // anim
-    //     .action(1)
-    //     .setRotation(15, 100, 0)
-    //     .then()
-    //     .setRotation(-15, 100, 0)
-    //     .then()
-    //     .resetPosition(100, 0)
-        // .setMasterRunCondition(()=>{return $gamePlayer.x == 8})
+
+    anim
+        .action(1)
+        .setRotation(15, 100, 0)
+        .then()
+        .setRotation(-15, 100, 0)
+        .prepareStep()
+    
 
     anim.activate();
-    return anim
+    });
+    
+    return result
 }
-
 
 
 

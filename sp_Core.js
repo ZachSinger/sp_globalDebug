@@ -280,7 +280,7 @@ standardPlayer.sp_Core.plotLinearPath = function (orig, dest, frames, pad) {
     return result
 }
 
-standardPlayer.sp_Core.retreiveFromList = function (list, condition) {
+standardPlayer.sp_Core.retrieveFromList = function (list, condition) {
     let length = list.length;
 
     for (let i = 0; i < length; i++) {

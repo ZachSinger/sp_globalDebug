@@ -187,7 +187,6 @@ class sp_Action {
     }
 
     moveXY(x, y, dur, pad) {
-
         let step = this.template();
 
         step.x = x;
@@ -622,7 +621,6 @@ function testScript() {
     
     return result
 }
-
 
 
 

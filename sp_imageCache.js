@@ -33,6 +33,16 @@ standardPlayer.sp_ImageCache.loadSprite = function (url, cb, args) {
     return stub;
 }
 
+standardPlayer.sp_ImageCache.createContainer = function(){
+    let container = new PIXI.Container;
+    let id = `container:${this.generateUUID()}`
+    let stub = new containerStub(id)
+
+    container.cacheId = id;
+    this.containers.push(container)
+    return stub;
+}
+
 standardPlayer.sp_ImageCache.retrieveEntity = function (cacheId) {
     switch (true) {
         case cacheId.contains('sprite'):
@@ -129,6 +139,12 @@ class cacheStub {
 
 
 class spriteStub extends cacheStub {
+    constructor(id){
+        super(id)
+    }
+}
+
+class containerStub extends cacheStub {
     constructor(id){
         super(id)
     }

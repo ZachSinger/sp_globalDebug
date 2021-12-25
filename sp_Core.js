@@ -291,3 +291,14 @@ standardPlayer.sp_Core.retrieveFromList = function (list, condition) {
 
     return false;
 }
+
+standardPlayer.sp_Core.collision = function(spriteA, spriteB) {
+    if(!spriteB)
+    spriteB = {x:TouchInput.x, y:TouchInput.y, width:1, height:1}
+    return !(
+        ((spriteA.y + spriteA.height) < (spriteB.y)) ||
+        (spriteA.y > (spriteB.y + spriteB.height)) ||
+        ((spriteA.x + spriteA.width) < spriteB.x) ||
+        (spriteA.x > (spriteB.x + spriteB.width))
+    );
+}

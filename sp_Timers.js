@@ -54,8 +54,8 @@ standardPlayer.sp_Core.addBaseUpdate(()=>{
  ===================================================================================================*/ 
 
 class sp_Timer{
-    constructor(time, 
-        args){ //time, ...callback/s
+    constructor(time, args){ //time, ...callback/s
+
         this.tick = 0;
         this.target = time;
         this.callbacks = args || [];
@@ -82,6 +82,10 @@ class sp_Timer{
         return this;
     }
 
+    togglePause(value){
+        this.pause = value || !this.pause;
+    }
+
     run(){
         if(this.runCondition() && !this.pause){
             if(this.tick++ >= this.target)
@@ -99,7 +103,8 @@ class sp_Timer{
     }
 
     checkRepeat(){
-        if(this.repeat--){
+        if(this.repeat === -1 || this.repeat--){
+
             this.tick = 0;
         } else {
             this.completed = true;

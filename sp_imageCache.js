@@ -33,6 +33,7 @@ standardPlayer.sp_ImageCache.loadSprite = function (url, cb, args) {
     return stub;
 }
 
+
 standardPlayer.sp_ImageCache.createContainer = function(){
     let container = new PIXI.Container;
     let id = `container:${this.generateUUID()}`
@@ -142,7 +143,6 @@ class spriteStub extends cacheStub {
     constructor(id){
         super(id)
     }
-}
 
 class containerStub extends cacheStub {
     constructor(id){

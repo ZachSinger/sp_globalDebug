@@ -42,6 +42,15 @@ standardPlayer.sp_ImageCache.createContainer = function(){
     this.containers.push(container)
     return stub;
 }
+standardPlayer.sp_ImageCache.createGraphic = function(){
+    let graphic = new PIXI.Graphics;
+    let id = `graphic:${this.generateUUID()}`
+    let stub = new graphicStub(id)
+
+    graphic.cacheId = id;
+    this.graphics.push(graphic)
+    return stub;
+}
 
 standardPlayer.sp_ImageCache.retrieveEntity = function (cacheId) {
     switch (true) {
@@ -145,6 +154,12 @@ class spriteStub extends cacheStub {
 }
 
 class containerStub extends cacheStub {
+    constructor(id){
+        super(id)
+    }
+}
+
+class graphicStub extends cacheStub {
     constructor(id){
         super(id)
     }

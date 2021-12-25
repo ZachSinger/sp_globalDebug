@@ -82,6 +82,16 @@ standardPlayer.sp_ImageCache.createGraphic = function(){
     return stub;
 }
 
+standardPlayer.sp_ImageCache.createText = function(content){
+    let text = new PIXI.Text(content);
+    let id = `text:${this.generateUUID()}`
+    let stub = new textStub(id)
+
+    text.sp_image_cacheId = id;
+    this.text.push(text)
+    return stub;
+}
+
 standardPlayer.sp_ImageCache.retrieveEntity = function (sp_image_cacheId) {
     switch (true) {
         case sp_image_cacheId.contains('sprite'):
@@ -190,6 +200,12 @@ class containerStub extends cacheStub {
 }
 
 class graphicStub extends cacheStub {
+    constructor(id){
+        super(id)
+    }
+}
+
+class textStub extends cacheStub {
     constructor(id){
         super(id)
     }

@@ -19,6 +19,15 @@ standardPlayer.sp_Animations.createAnimation = function (target) {
     return anim;
 }
 
+standardPlayer.sp_Animations.reserveAnimation = function(url, cb) {
+    let stub = standardPlayer.sp_ImageCache.loadSprite(url, cb);
+
+    stub.retrieve().onCacheArgs = this.createAnimation(()=>{return stub.retrieve()})
+    // anim.reserved = true;
+    // this.addAnim(anim)
+    // return anim;
+}
+
 standardPlayer.sp_Animations.addAnim = function (anim) {
     this.animations.push(anim);
     this.active = true;
@@ -31,7 +40,7 @@ standardPlayer.sp_Animations.run = function () {
     // console.log('running animations master')
 
     for (let i = 0; i < length; i++) {
-        this.runActions(list[i])
+            this.runActions(list[i])
     }
 }
 
@@ -52,10 +61,22 @@ standardPlayer.sp_Animations.playAction = function (action) {
 
 class spAnimation {
     constructor(target) {
-        this.target = target;
-        this.cacheProps();
         this.actions = [];
         this.steps = [];
+        this.setTarget(target)
+        this.cacheProps();
+    }
+
+    target(){
+        return this._target;
+    }
+
+    setTarget(target){
+        if(typeof target == 'function'){
+            this.target = target;
+        } else {
+            this._target = target
+        }
     }
 
     cacheProps() {
@@ -64,7 +85,7 @@ class spAnimation {
     }
 
     extractInitialProps() {
-        let target = this.target;
+        let target = this.target();
         let props = {
             'x': target.x,
             'y': target.y,
@@ -77,6 +98,19 @@ class spAnimation {
         props.scale.x = target.scale._x;
         props.scale.y = target.scale._y;
         return props;
+    }
+
+    checkPreload(){
+        if(this.reserved){
+            if(this.isPreloaded){
+                return true
+            } else {
+                return false
+            }
+
+        } 
+            return true
+        
     }
 
     action(index) {
@@ -92,6 +126,20 @@ class spAnimation {
 
         this.actions.push(action);
         return action;
+    }
+
+    allComplete() {
+        let complete = true;
+        let list = this.actions;
+        let length = list.length;
+
+        for(let i = 0; i < length; i++){
+            if(list[i].active){
+                complete = false
+            }
+        }
+
+        return complete
     }
 
     activate() {
@@ -135,7 +183,7 @@ class sp_Action {
     }
 
     target() {
-        return this.animation.target;
+        return this.animation.target();
     }
 
     moveXY(x, y, dur, pad) {
@@ -150,7 +198,6 @@ class sp_Action {
     }
 
     moveXYRel(x, y, dur, pad) {
-        let cache = this.getPositionData();
         let step = this.template();
 
         step.x = this.getLastPropValue('x') + x;
@@ -534,10 +581,13 @@ class sp_Action {
 
 
 function testScript() {
-    window.grph = new PIXI.Graphics(); grph.beginFill(0xFFFFFF); grph.drawRect(0, 0, 100, 100);
-    SceneManager._scene.addChild(grph)
-    let anim = standardPlayer.sp_Animations.createAnimation(grph);
-    anim
+    // window.grph = new PIXI.Graphics(); grph.beginFill(0xFFFFFF); grph.drawRect(0, 0, 100, 100);
+    // SceneManager._scene.addChild(grph)
+    let result = standardPlayer.sp_Animations.reserveAnimation('pictures/Actor1_1', (anim)=>{
+        console.log('running callback')
+        console.log(anim)
+        SceneManager._scene.addChild(anim.target())
+        anim
         .action(0)
         .moveXY(Graphics.width * .4, Graphics.height * .5, 100, 0)
         .setScale(1.4, 2.1, 100, 0)
@@ -567,7 +617,9 @@ function testScript() {
     
 
     anim.activate();
-    return anim
+    });
+    
+    return result
 }
 
 

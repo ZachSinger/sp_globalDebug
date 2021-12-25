@@ -19,13 +19,16 @@ standardPlayer.sp_Core.addBaseUpdate(() => {
 
 standardPlayer.sp_ImageCache.Parameters = PluginManager.parameters('standardPlayer.sp_ImageCache');
 
-standardPlayer.sp_ImageCache.loadSprite = function (url, cb, args) {
+standardPlayer.sp_ImageCache.loadSharedSprite = function (url, cb, args) {
     let id = `sprite:${this.generateUUID()}`
     let stub = new spriteStub(id);
     let spr = new PIXI.Sprite.from(`img/${url}.png`);
+    
+    if(typeof cb == 'undefined')
+        cb = ()=>{};
 
-    spr.cacheId = id;
-    spr.onCacheLoad = cb;
+    spr.sp_image_cacheId = id;
+    spr.onCacheLoad = cb
     spr.onCacheArgs = args;
     this.sprites.push(spr)
     this.active = true
@@ -33,12 +36,38 @@ standardPlayer.sp_ImageCache.loadSprite = function (url, cb, args) {
     return stub;
 }
 
+standardPlayer.sp_ImageCache.loadSprite = function(url, cb, args){
+    let id = `sprite:${this.generateUUID()}`
+    let stub = new spriteStub(id);
+    let spr = new PIXI.Sprite.from(this.createTexture(`img/${url}.png`));
+
+    if(typeof cb == 'undefined')
+        cb = ()=>{};
+
+    spr.sp_image_cacheId = id;
+    spr.onCacheLoad = cb;
+    spr.onCacheArgs = args;
+    this.sprites.push(spr)
+    this.active = true
+
+    return stub;
+
+
+}
+
+standardPlayer.sp_ImageCache.createTexture = function(url){
+    if(typeof PIXI.utils.TextureCache[url] != 'undefined'){
+        return new PIXI.Texture(PIXI.utils.TextureCache[url])
+    }
+    return new PIXI.Texture.from(url)
+}
+
 standardPlayer.sp_ImageCache.createContainer = function(){
     let container = new PIXI.Container;
     let id = `container:${this.generateUUID()}`
     let stub = new containerStub(id)
 
-    container.cacheId = id;
+    container.sp_image_cacheId = id;
     this.containers.push(container)
     return stub;
 }
@@ -48,51 +77,51 @@ standardPlayer.sp_ImageCache.createGraphic = function(){
     let id = `graphic:${this.generateUUID()}`
     let stub = new graphicStub(id)
 
-    graphic.cacheId = id;
+    graphic.sp_image_cacheId = id;
     this.graphics.push(graphic)
     return stub;
 }
 
-standardPlayer.sp_ImageCache.retrieveEntity = function (cacheId) {
+standardPlayer.sp_ImageCache.retrieveEntity = function (sp_image_cacheId) {
     switch (true) {
-        case cacheId.contains('sprite'):
-            return this.retrieveSprite(cacheId)[1]
+        case sp_image_cacheId.contains('sprite'):
+            return this.retrieveSprite(sp_image_cacheId)[1]
 
-        case cacheId.contains('container'):
-            return this.retrieveContainer(cacheId)[1]
+        case sp_image_cacheId.contains('container'):
+            return this.retrieveContainer(sp_image_cacheId)[1]
 
-        case cacheId.contains('graphic'):
-            return this.retreiveGraphic(cacheId)[1]
+        case sp_image_cacheId.contains('graphic'):
+            return this.retreiveGraphic(sp_image_cacheId)[1]
 
-        case cacheId.contains('text'):
-            return this.retreiveText(cacheId)[1]
+        case sp_image_cacheId.contains('text'):
+            return this.retreiveText(sp_image_cacheId)[1]
 
         default:
             console.log('not recognized id')
     }
 }
 
-standardPlayer.sp_ImageCache.retrieveSprite = function (cacheId) {
+standardPlayer.sp_ImageCache.retrieveSprite = function (sp_image_cacheId) {
     return standardPlayer.sp_Core.retrieveFromList(this.sprites, (sprite) => {
-        return sprite.cacheId == cacheId
+        return sprite.sp_image_cacheId == sp_image_cacheId
     })
 }
 
-standardPlayer.sp_ImageCache.retrieveContainer = function (cacheId) {
+standardPlayer.sp_ImageCache.retrieveContainer = function (sp_image_cacheId) {
     return standardPlayer.sp_Core.retrieveFromList(this.containers, (container) => {
-        return container.cacheId == cacheId
+        return container.sp_image_cacheId == sp_image_cacheId
     })
 }
 
-standardPlayer.sp_ImageCache.retreiveGraphic = function (cacheId) {
+standardPlayer.sp_ImageCache.retreiveGraphic = function (sp_image_cacheId) {
     return standardPlayer.sp_Core.retrieveFromList(this.graphics, (graphic) => {
-        return graphic.cacheId == cacheId
+        return graphic.sp_image_cacheId == sp_image_cacheId
     })
 }
 
-standardPlayer.sp_ImageCache.retreiveText = function (cacheId) {
+standardPlayer.sp_ImageCache.retreiveText = function (sp_image_cacheId) {
     return standardPlayer.sp_Core.retrieveFromList(this.text, (text) => {
-        return text.cacheId == cacheId
+        return text.sp_image_cacheId == sp_image_cacheId
     })
 }
 
@@ -139,11 +168,11 @@ standardPlayer.sp_ImageCache.allSpritesLoaded = function(){
 
 class cacheStub {
     constructor(id) {
-        this.cacheId = id
+        this.sp_image_cacheId = id
     }
 
     retrieve() {
-        return standardPlayer.sp_ImageCache.retrieveEntity(this.cacheId)
+        return standardPlayer.sp_ImageCache.retrieveEntity(this.sp_image_cacheId)
     }
 }
 

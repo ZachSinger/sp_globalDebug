@@ -7,6 +7,9 @@ standardPlayer.sp_ImageCache = standardPlayer.sp_ImageCache || {
     sprites: [],
     graphics: [],
     text: [],
+    batches: [],
+    batchCbs: {},
+    batchArgs:[],
     isLoaded: false,
     active: true
 };
@@ -51,8 +54,42 @@ standardPlayer.sp_ImageCache.loadSprite = function(url, cb, args){
     this.active = true
 
     return stub;
+}
 
+standardPlayer.sp_ImageCache.loadBatch = function(name, list, cb, args){
+    let length = list.length;
+    let stubs = [];
+    if(!cb){
+        cb = ()=> {}
+    }
 
+    for(let i = 0; i < length; i++){
+        stubs.push(this.loadSprite(list[i]))
+        stubs[i].retrieve().sp_image_cache_batch = name;
+    }
+    this.batches.push(name)
+    this.batchCbs.push(cb)
+    this.batchArgs.push(args)
+
+    return stubs;
+}
+
+standardPlayer.sp_ImageCache.loadSharedBatch = function(name, list, cb, args){
+    let length = list.length;
+    let stubs = [];
+    if(!cb){
+        cb = ()=> {}
+    }
+
+    for(let i = 0; i < length; i++){
+        stubs.push(this.loadSharedSprite(list[i]))
+        stubs[i].retrieve().sp_image_cache_batch = name;
+    }
+    this.batches.push(name)
+    this.batchCbs.push(cb)
+    this.batchArgs.push(args)
+
+    return stubs;
 }
 
 standardPlayer.sp_ImageCache.createTexture = function(url){
@@ -90,6 +127,100 @@ standardPlayer.sp_ImageCache.createText = function(content){
     text.sp_image_cacheId = id;
     this.text.push(text)
     return stub;
+}
+
+//returns true if it find the same texture as the sprite on the stub provided, but on a different sprite in the cache
+standardPlayer.sp_ImageCache.textureInUse = function(stub){
+    let texture = stub.retrieve().texture;
+    let baseTexture = texture.baseTexture;
+    let list = this.sprites;
+    let length = list.length;
+
+    for(let i = 0; i < length; i++){
+        if(list[i].texture.baseTexture === baseTexture && list[i].texture !== texture){ 
+            if(list[i].parent){
+                return true
+            }
+        }
+    }
+
+    return false
+}
+
+standardPlayer.sp_ImageCache.deleteSprite = function(stub){
+    let list = this.sprites;
+    let length = list.length;
+    let newList = [];
+    let toDelete = [];
+
+    for(let i = 0; i < length; i++){
+        if(list[i].sp_image_cacheId == stub.sp_image_cacheId){
+            console.log(this.textureInUse(stub)) 
+            list[i].destroy(!this.textureInUse(stub)) 
+            list[i] = undefined
+        } else {
+            newList.push(list[i])
+        }
+    }
+
+    this.sprites = newList;
+}
+
+standardPlayer.sp_ImageCache.deleteGraphic = function(stub){
+    let list = this.graphics;
+    let index = standardPlayer.sp_Core.retrieveFromList(list, (item)=>{
+        return item == stub.retrieve();
+    })[0]
+
+    list[index].destroy(true)
+    list.splice(index, 1)
+    
+}
+
+standardPlayer.sp_ImageCache.deleteText = function(stub){
+    let list = this.text;
+    let index = standardPlayer.sp_Core.retrieveFromList(list, (item)=>{
+        return item == stub.retrieve();
+    })[0]
+
+    list[index].destroy(true)
+    list.splice(index, 1)
+}
+
+
+standardPlayer.sp_ImageCache.deleteContainer = function(stub){
+    let list = this.containers;
+    let length = list.length;
+    let newList = [];
+    let toDelete = [];
+
+    for(let i = 0; i < length; i++){
+        if(list[i].sp_image_cacheId == stub.sp_image_cacheId){
+            console.log('found container')
+            this.destroyContainerChildren(list[i]);
+            list[i].destroy(true) 
+            list[i] = undefined
+        } else {
+            newList.push(list[i])
+        }
+    }
+    console.log(newList)
+    this.containers = newList;
+}
+
+standardPlayer.sp_ImageCache.destroyContainerChildren = function(container){
+    let spr;
+
+    while(container.children.length > 0){
+        spr = container.removeChildAt(0);
+        this.deleteSprite(
+            {retrieve: ()=>{
+                return spr;
+            },
+            sp_image_cacheId: spr.sp_image_cacheId
+            })
+        spr = undefined;
+    }
 }
 
 standardPlayer.sp_ImageCache.retrieveEntity = function (sp_image_cacheId) {
@@ -161,29 +292,86 @@ standardPlayer.sp_ImageCache.allSpritesLoaded = function(){
     let length = list.length;
     let loaded = true;
     let current;
+    let batches = [];
 
     for(let i = 0; i < length; i++){
         current = list[i]
         if(typeof current.sp_image_loaded == 'undefined'){
             loaded = false;
+            if(current.sp_image_cache_batch){
+                    batches[current.sp_image_cache_batch] = true;
+                }
             if(current.texture.baseTexture.valid){
                 current.sp_image_loaded = true;
                 current.onCacheLoad(current.onCacheArgs);
+            } else {
+                console.log('reaching')
+                if(current.sp_image_cache_batch){
+                    batches[current.sp_image_cache_batch] = true;
+                }
             }
         } 
     }
+
+    this.checkBatches(batches);
     return loaded;
+}
+
+//the batches arg contains a list of batch names that are NOT READY to be called 
+standardPlayer.sp_ImageCache.checkBatches = function(batches){
+    let list = this.batches;
+    let cbs = this.batchCbs;
+    let args = this.batchArgs;
+    let length = list.length;
+    let fleeceList = [];
+
+    for(let i = 0; i < length; i++)   {
+        if(batches[list[i]])
+            continue
+        
+        cbs[i](args[i])
+        fleeceList.push(i)
+    }
+
+    this.fleeceCallbacks(fleeceList)
+}
+
+standardPlayer.sp_ImageCache.fleeceCallbacks = function(fleeceList){
+    let batches = this.batches;
+    let cbs = this.batchCbs;
+    let args = this.batchArgs; 
+    let length = batches.length;
+    let newBatches = []
+    let newCbs = [];
+    let newArgs = [];
+
+
+    for(let i = 0; i < length; i++){
+        if(fleeceList.contains(i))
+            continue;
+
+        newBatches.push(batches[i])
+        newCbs.push(cbs[i])
+        newArgs.push(args[i])
+    }
+
+    this.batches = newBatches;
+    this.batchCbs = newCbs;
+    this.batchArgs = newArgs;
+
 }
 
 
 class cacheStub {
     constructor(id) {
         this.sp_image_cacheId = id
+        this.ref = this.retrieve.bind(this)
     }
 
     retrieve() {
         return standardPlayer.sp_ImageCache.retrieveEntity(this.sp_image_cacheId)
     }
+
 }
 
 
@@ -191,11 +379,19 @@ class spriteStub extends cacheStub {
     constructor(id){
         super(id)
     }
+
+    delete(){
+        standardPlayer.sp_ImageCache.deleteSprite(this)
+    }
 }
 
 class containerStub extends cacheStub {
     constructor(id){
         super(id)
+    }
+
+    delete(){
+        standardPlayer.sp_ImageCache.deleteContainer(this)
     }
 }
 
@@ -203,10 +399,18 @@ class graphicStub extends cacheStub {
     constructor(id){
         super(id)
     }
+
+    delete(){
+        standardPlayer.sp_ImageCache.deleteGraphic(this)
+    }
 }
 
 class textStub extends cacheStub {
     constructor(id){
         super(id)
+    }
+
+    delete(){
+        standardPlayer.sp_ImageCache.deleteText(this)
     }
 }

@@ -7,15 +7,18 @@ standardPlayer.sp_Animations = standardPlayer.sp_Animations || { animations: [],
 standardPlayer.sp_Animations.Parameters = PluginManager.parameters('standardPlayer.sp_Animations');
 
 standardPlayer.sp_Core.addBaseUpdate(() => {
+    requestAnimationFrame(()=>{
     let thisObject = standardPlayer.sp_Animations;
     if (thisObject.active)
         thisObject.run();
+    })
 })
 
 standardPlayer.sp_Animations.createAnimation = function (target) {
     let anim = new spAnimation(target);
 
     this.addAnim(anim);
+    target.anim = anim;
     return anim;
 }
 
@@ -26,6 +29,17 @@ standardPlayer.sp_Animations.reserveAnimation = function(url, cb) {
     // anim.reserved = true;
     // this.addAnim(anim)
     // return anim;
+    return stub
+}
+
+standardPlayer.sp_Animations.reserveAnimationShared = function(url, cb) {
+    let stub = standardPlayer.sp_ImageCache.loadSharedSprite(url, cb);
+
+    stub.retrieve().onCacheArgs = this.createAnimation(()=>{return stub.retrieve()})
+    // anim.reserved = true;
+    // this.addAnim(anim)
+    // return anim;
+    return stub
 }
 
 standardPlayer.sp_Animations.addAnim = function (anim) {
@@ -41,13 +55,13 @@ standardPlayer.sp_Animations.run = function () {
     // console.log('running animations master')
 
     for (let i = 0; i < length; i++) {
-        if(!list[i].allComplete()){
+        if(!list[i].allComplete() || !list[i].actions.length){
             this.runActions(list[i])
             results.push(list[i])
         }
             
     }
-
+    
     this.animations = results
 }
 
@@ -59,13 +73,16 @@ standardPlayer.sp_Animations.runActions = function (animation) {
 
 standardPlayer.sp_Animations.playAction = function (action) {
     if (action.isCompleted()) {
-        console.log('action completed')
         action.masterCb()
         action.active = false;
     } else if (action.active && action.passesRunConditions()) {
         action.play();
     }
 }
+
+/* ===================================================================================================
+        spAnimation class
+ ===================================================================================================*/
 
 class spAnimation {
     constructor(target) {
@@ -280,6 +297,7 @@ class sp_Action {
         return this;
     }
 
+
     setCustomProp(prop, value, dur, pad) {
         let step = this.template();
 
@@ -302,7 +320,6 @@ class sp_Action {
 
     resetPosition(dur, pad) {
         let step = this.template();
-        console.log('index: ' + this.index)
 
         step.resetPosition = true;
         this.dur[this.index] = dur;
@@ -358,8 +375,7 @@ class sp_Action {
         let current;
         
         // if(keys[0] == 'wait')
-        console.log('running reset path')
-        console.log(this.index)
+        
         for (let i = 0; i < length; i++) {
             current = keys[i];
             if(current == 'scale'){
@@ -591,10 +607,16 @@ class sp_Action {
         this.target().scale.set(props.x[index], props.y[index])
     }
 
+
     activate() {
         this.tick = 0;
         this.index = 0;
         this.active = true;
+    }
+
+    finalize(){
+        this.prepareStep()
+        this.animation.activate()
     }
 
     then() {
@@ -611,6 +633,12 @@ class sp_Action {
 
 }
 
+
+
+
+/* ===================================================================================================
+        Test Area
+ ===================================================================================================*/
 
 
 function testScript() {
@@ -659,15 +687,14 @@ function pewpew(x, y){
     let grph = standardPlayer.sp_ImageCache.createGraphic();
 
     grph.retrieve().beginFill(0xFFFFFF)
-    grph.retrieve().drawCircle(0, 0, 20);
+    grph.retrieve().drawCircle(0, 0, 10);
     grph.retrieve().position.set(x, y)
     SceneManager._scene.addChild(grph.retrieve());
 
     let anim = standardPlayer.sp_Animations.createAnimation(grph.ref)
-    console.log(anim.target)
     anim.
         action(0)
-        .moveXYRel(0, -Graphics.height, 30, 0)
+        .moveXYRel(0, -Graphics.height, 35, 0)
         .setThroughCb(()=>{
             if(standardPlayer.sp_Core.collision($gamePlayer.sprite, grph.retrieve())){
                 anim.kill = true
@@ -695,6 +722,13 @@ function setShip(){
 function setListeners(target){
     standardPlayer.sp_Core.allowPlayerMovement = false;
     let tg = target.retrieve();
+
+    let updateFire = ()=>{
+        if(lastFire > 0){
+            lastFire--;
+        } 
+        
+    }
     let leftCb = ()=>{
         if(Input.isPressed('left')){
             tg.x -= 12
@@ -709,12 +743,19 @@ function setListeners(target){
     }
 
     let okCb = ()=>{
-        if(Input.isTriggered('ok')){
-            pewpew(tg.x + tg.width / 2, tg.y)
+        if(Input.isPressed('ok')){
+            if(lastFire == 0){
+                console.log('firing')
+                pewpew(tg.x + tg.width / 2, tg.y)
+                lastFire = 5
+            }
         }
     }
 
     standardPlayer.sp_Core.addBaseUpdate(leftCb)
     standardPlayer.sp_Core.addBaseUpdate(rightCb)
     standardPlayer.sp_Core.addBaseUpdate(okCb)
+    standardPlayer.sp_Core.addBaseUpdate(updateFire)
 }
+
+let lastFire = 0;

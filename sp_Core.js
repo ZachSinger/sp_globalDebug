@@ -238,6 +238,7 @@ standardPlayer.sp_Core.getCharacterFromSpriteset = function (character) {
     for (sprite of spriteset) {
         if (sprite._character == character)
             character.sprite = sprite;
+            
     }
 }
 
@@ -247,12 +248,46 @@ standardPlayer.sp_Core.setSpriteReferences = function () {
     evs.forEach(ev => standardPlayer.sp_Core.getCharacterFromSpriteset(ev))
 }
 
+
 standardPlayer.sp_Core._aliasMapStart = Scene_Map.prototype.start;
 Scene_Map.prototype.start = function () {
     standardPlayer.sp_Core.setSpriteReferences();
     standardPlayer.sp_Core.getCharacterFromSpriteset($gamePlayer)
 
     standardPlayer.sp_Core._aliasMapStart.call(this)
+}
+
+Game_CharacterBase.prototype.setRow = function(row){
+    let sprite = this.sprite;
+    let singleHeight = sprite.height;
+    let singleWidth = sprite.width;
+
+    if(!this.gridData)
+        this.gridData = {row:0, col:0, rowMax:3, colMax:2}
+    console.log(Math.min(row, this.gridData.rowMax))
+    row = Math.max(Math.min(row, this.gridData.rowMax), 0);    
+    this.gridData.row = row;
+
+    sprite.texture.frame = new Rectangle(sprite.texture.frame.x, singleHeight * row, singleWidth, singleHeight)
+}
+
+Game_CharacterBase.prototype.setCol = function(col){
+    let sprite = this.sprite;
+    let singleHeight = sprite.height;
+    let singleWidth = sprite.width;
+
+    if(!this.gridData)
+        this.gridData = {row:0, col:0, rowMax:3, colMax:2}
+    console.log(Math.min(col, this.gridData.colMax))
+    col = Math.max(Math.min(col, this.gridData.colMax), 0);    
+    this.gridData.col = col;
+
+    sprite.texture.frame = new Rectangle( singleWidth * col, sprite.texture.frame.y, singleWidth, singleHeight)
+}
+
+Game_CharacterBase.prototype.setRowCol = function(row, col){
+    this.setRow(row);
+    this.setCol(col);
 }
 
 

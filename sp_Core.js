@@ -337,3 +337,8 @@ standardPlayer.sp_Core.collision = function(spriteA, spriteB) {
         (spriteA.x > (spriteB.x + spriteB.width))
     );
 }
+
+standardPlayer.sp_Core.rndBetween = function(min, max, includingMax) {
+    max = includingMax ? max + 1 : max;
+  return Math.floor(Math.random() * (max - min) ) + min;
+}

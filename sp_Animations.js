@@ -7,15 +7,18 @@ standardPlayer.sp_Animations = standardPlayer.sp_Animations || { animations: [],
 standardPlayer.sp_Animations.Parameters = PluginManager.parameters('standardPlayer.sp_Animations');
 
 standardPlayer.sp_Core.addBaseUpdate(() => {
+    requestAnimationFrame(()=>{
     let thisObject = standardPlayer.sp_Animations;
     if (thisObject.active)
         thisObject.run();
+    })
 })
 
 standardPlayer.sp_Animations.createAnimation = function (target) {
     let anim = new spAnimation(target);
 
     this.addAnim(anim);
+    target.anim = anim;
     return anim;
 }
 
@@ -26,6 +29,18 @@ standardPlayer.sp_Animations.reserveAnimation = function(url, cb) {
     // anim.reserved = true;
     // this.addAnim(anim)
     // return anim;
+    return stub
+}
+
+standardPlayer.sp_Animations.reserveAnimationShared = function(url, cb) {
+    let stub = standardPlayer.sp_ImageCache.loadSharedSprite(url, cb);
+
+    stub.retrieve().onCacheArgs = this.createAnimation(()=>{return stub.retrieve()})
+    // anim.reserved = true;
+    // this.addAnim(anim)
+    // return anim;
+    return stub
+
 }
 
 standardPlayer.sp_Animations.addAnim = function (anim) {
@@ -36,12 +51,19 @@ standardPlayer.sp_Animations.addAnim = function (anim) {
 standardPlayer.sp_Animations.run = function () {
     let list = this.animations;
     let length = list.length;
+    let results = [];
 
     // console.log('running animations master')
 
     for (let i = 0; i < length; i++) {
+        if(!list[i].allComplete() || !list[i].actions.length){
             this.runActions(list[i])
+            results.push(list[i])
+        }
+            
     }
+    
+    this.animations = results
 }
 
 standardPlayer.sp_Animations.runActions = function (animation) {
@@ -52,15 +74,20 @@ standardPlayer.sp_Animations.runActions = function (animation) {
 
 standardPlayer.sp_Animations.playAction = function (action) {
     if (action.isCompleted()) {
-        console.log('action completed')
+        action.masterCb()
         action.active = false;
     } else if (action.active && action.passesRunConditions()) {
         action.play();
     }
 }
 
+/* ===================================================================================================
+        spAnimation class
+ ===================================================================================================*/
+
 class spAnimation {
     constructor(target) {
+        this.kill = false;
         this.actions = [];
         this.steps = [];
         this.setTarget(target)
@@ -72,8 +99,8 @@ class spAnimation {
     }
 
     setTarget(target){
-        if(typeof target == 'function'){
-            this.target = target;
+        if(typeof target == 'function'){           
+            this.target = target
         } else {
             this._target = target
         }
@@ -139,7 +166,7 @@ class spAnimation {
             }
         }
 
-        return complete
+        return complete || this.kill
     }
 
     activate() {
@@ -166,6 +193,9 @@ class sp_Action {
         this.repeat = [0];
         this.repeatCache = [0]
         this.masterRepeat = 0;
+        this.throughCb = ()=>{};
+        this.stepCb = [()=>{}]
+        this.masterCb = ()=>{}
         this.runCondition = [() => { return true }];
         this.masterRunCondition = () => { return true };
     }
@@ -267,6 +297,7 @@ class sp_Action {
         return this;
     }
 
+
     setCustomProp(prop, value, dur, pad) {
         let step = this.template();
 
@@ -289,8 +320,6 @@ class sp_Action {
 
     resetPosition(dur, pad) {
         let step = this.template();
-        console.log('index: ' + this.index)
-
         step.resetPosition = true;
         this.dur[this.index] = dur;
         this.pad[this.index] = pad;
@@ -345,8 +374,6 @@ class sp_Action {
         let current;
         
         // if(keys[0] == 'wait')
-        console.log('running reset path')
-        console.log(this.index)
         for (let i = 0; i < length; i++) {
             current = keys[i];
             if(current == 'scale'){
@@ -434,6 +461,25 @@ class sp_Action {
         }
     }
 
+    setStepCb(cb){
+        this.stepCb[this.index] = cb;
+        return this;
+    }
+
+    setMasterCb(cb){
+        this.masterCb = cb;
+        return this
+    }
+
+    runStepCb(){
+        this.stepCb[this.index - 1]()
+    }
+
+    setThroughCb(cb){
+        this.throughCb = cb;
+        return this
+    }
+
     getRunCondition() {
         return this.runCondition[this.index];
     }
@@ -444,12 +490,9 @@ class sp_Action {
 
     getPositionData() {
         if (!this.index) {
-            console.log('return this.animation.initialCache')
-            console.log(this.animation.initialCache)
             return this.animation.initialCache
         }
         else {
-            console.log('return this.stepTemplate[this.indedx - 1 ')
             return this.stepTemplate[this.index - 1]
         }
     }
@@ -522,6 +565,8 @@ class sp_Action {
 
         }
 
+        this.throughCb()
+
     }
 
     isCompleted() {
@@ -535,6 +580,7 @@ class sp_Action {
             this.index++;
             this.tick = 0;
             this.updateCache();
+            this.runStepCb()
             return true;
         }
 
@@ -559,10 +605,16 @@ class sp_Action {
         this.target().scale.set(props.x[index], props.y[index])
     }
 
+
     activate() {
         this.tick = 0;
         this.index = 0;
         this.active = true;
+    }
+
+    finalize(){
+        this.prepareStep()
+        this.animation.activate()
     }
 
     then() {
@@ -572,6 +624,7 @@ class sp_Action {
         this.repeatCache.push(0);
         this.steps[this.index] = {}//this.getPositionData()
         this.stepTemplate[this.index] = {}//Object.assign({}, this.stepTemplate[this.index - 1]);
+        this.stepCb[this.index] = ()=>{};
         this.runCondition.push(() => { return true })
         return this;
     }
@@ -580,12 +633,17 @@ class sp_Action {
 
 
 
+
+/* ===================================================================================================
+        Test Area
+ ===================================================================================================*/
+
+
 function testScript() {
     // window.grph = new PIXI.Graphics(); grph.beginFill(0xFFFFFF); grph.drawRect(0, 0, 100, 100);
     // SceneManager._scene.addChild(grph)
     let result = standardPlayer.sp_Animations.reserveAnimation('pictures/Actor1_1', (anim)=>{
-        console.log('running callback')
-        console.log(anim)
+
         SceneManager._scene.addChild(anim.target())
         anim
         .action(0)
@@ -619,10 +677,86 @@ function testScript() {
     anim.activate();
     });
     
+    window['testanim'] = result
+}
+
+
+function pewpew(x, y){
+    let grph = standardPlayer.sp_ImageCache.createGraphic();
+
+    grph.retrieve().beginFill(0xFFFFFF)
+    grph.retrieve().drawCircle(0, 0, 10);
+    grph.retrieve().position.set(x, y)
+    SceneManager._scene.addChild(grph.retrieve());
+
+    let anim = standardPlayer.sp_Animations.createAnimation(grph.ref)
+    anim.
+        action(0)
+        .moveXYRel(0, -Graphics.height, 35, 0)
+        .setThroughCb(()=>{
+            if(standardPlayer.sp_Core.collision($gamePlayer.sprite, grph.retrieve())){
+                anim.kill = true
+                grph.delete()
+            }
+            })
+        .prepareStep();
+
+    anim.activate();
+    });
+    
     return result
 }
 
 
+function setShip(){
+    let cb = ()=>{
+        stub.retrieve().position.set(Graphics.width / 2, Graphics.height - stub.retrieve().height)
+    }
+    let stub = standardPlayer.sp_ImageCache.loadSprite('pictures/playerShip', cb)
 
+    SceneManager._scene.addChild(stub.retrieve())
 
+    return stub
+}
+
+function setListeners(target){
+    standardPlayer.sp_Core.allowPlayerMovement = false;
+    let tg = target.retrieve();
+
+    let updateFire = ()=>{
+        if(lastFire > 0){
+            lastFire--;
+        } 
+        
+    }
+    let leftCb = ()=>{
+        if(Input.isPressed('left')){
+            tg.x -= 12
+        }
+    }
+
+    
+    let rightCb = ()=>{
+        if(Input.isPressed('right')){
+            tg.x += 12
+        }
+    }
+
+    let okCb = ()=>{
+        if(Input.isPressed('ok')){
+            if(lastFire == 0){
+                console.log('firing')
+                pewpew(tg.x + tg.width / 2, tg.y)
+                lastFire = 5
+            }
+        }
+    }
+
+    standardPlayer.sp_Core.addBaseUpdate(leftCb)
+    standardPlayer.sp_Core.addBaseUpdate(rightCb)
+    standardPlayer.sp_Core.addBaseUpdate(okCb)
+    standardPlayer.sp_Core.addBaseUpdate(updateFire)
+}
+
+let lastFire = 0;
 

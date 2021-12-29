@@ -40,6 +40,7 @@ standardPlayer.sp_Animations.reserveAnimationShared = function(url, cb) {
     // this.addAnim(anim)
     // return anim;
     return stub
+
 }
 
 standardPlayer.sp_Animations.addAnim = function (anim) {
@@ -98,8 +99,7 @@ class spAnimation {
     }
 
     setTarget(target){
-        if(typeof target == 'function'){
-            
+        if(typeof target == 'function'){           
             this.target = target
         } else {
             this._target = target
@@ -320,7 +320,6 @@ class sp_Action {
 
     resetPosition(dur, pad) {
         let step = this.template();
-
         step.resetPosition = true;
         this.dur[this.index] = dur;
         this.pad[this.index] = pad;
@@ -375,7 +374,6 @@ class sp_Action {
         let current;
         
         // if(keys[0] == 'wait')
-        
         for (let i = 0; i < length; i++) {
             current = keys[i];
             if(current == 'scale'){
@@ -704,7 +702,9 @@ function pewpew(x, y){
         .prepareStep();
 
     anim.activate();
-    return anim
+    });
+    
+    return result
 }
 
 
@@ -759,3 +759,4 @@ function setListeners(target){
 }
 
 let lastFire = 0;
+

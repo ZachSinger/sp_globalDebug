@@ -121,7 +121,6 @@ standardPlayer.sp_ImageCache.setRow = function(row){
 
     if(!this.gridData)
         this.gridData = {row:0, col:0, rowMax:3, colMax:2}
-    console.log(Math.min(row, this.gridData.rowMax))
     row = Math.max(Math.min(row, this.gridData.rowMax), 0);    
     this.gridData.row = row;
 
@@ -135,7 +134,6 @@ standardPlayer.sp_ImageCache.setCol = function(col){
 
     if(!this.gridData)
         this.gridData = {row:0, col:0, rowMax:3, colMax:2}
-    console.log(Math.min(col, this.gridData.colMax))
     col = Math.max(Math.min(col, this.gridData.colMax), 0);    
     this.gridData.col = col;
 
@@ -288,7 +286,6 @@ standardPlayer.sp_ImageCache.deleteContainer = function(stub){
 
     for(let i = 0; i < length; i++){
         if(list[i].sp_image_cacheId == stub.sp_image_cacheId){
-            console.log('found container')
             this.destroyContainerChildren(list[i]);
             list[i].destroy(true) 
             list[i] = undefined
@@ -296,7 +293,6 @@ standardPlayer.sp_ImageCache.deleteContainer = function(stub){
             newList.push(list[i])
         }
     }
-    console.log(newList)
     this.containers = newList;
 }
 
@@ -369,7 +365,6 @@ standardPlayer.sp_ImageCache.generateUUID = function(){
 }
 
 standardPlayer.sp_ImageCache.run = function(){
-    console.log('image cache running')
     this.isReady();
     if(this.isLoaded)
         this.active = false;

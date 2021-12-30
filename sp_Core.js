@@ -294,7 +294,7 @@ Game_CharacterBase.prototype.setGridData = function(rows, cols){
     let sprite = this.sprite;
 
     if(!this.gridData)
-        this.gridData = {row:0, col:0, rowMax:rows, colMax:cols}
+        this.gridData = {row:0, col:0, rowMax:rows - 1, colMax:cols - 1}
 
     sprite.texture.frame = new Rectangle(0, 0, sprite.texture.baseTexture.width / cols, sprite.texture.baseTexture.height / rows)
         return this;

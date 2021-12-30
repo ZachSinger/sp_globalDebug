@@ -24,50 +24,64 @@ shipMiniScene.prototype.onPreloaded = function () {
     let xPadding = enemies[0].retrieve().width / 2
     let odd = false;
 
-    for (let i = 0; i < enemies.length; i++) {
-        odd = Math.floor(i / 10) % 2 == 0;
-        x = sWidth * (i % 10) + xPadding;
-        y = sHeight * Math.floor(i / 10);
-        enemies[i].retrieve().position.set(x, y)
+    // for (let i = 0; i < enemies.length; i++) {
+    //     odd = Math.floor(i / 10) % 2 == 0;
+    //     x = sWidth * (i % 10) + xPadding;
+    //     y = sHeight * Math.floor(i / 10);
+    //     enemies[i].retrieve().position.set(x, y)
 
-        this.addChild(enemies[i].retrieve())
-        if (odd) {
-            standardPlayer.sp_Animations.createAnimation(enemies[i].retrieve())
-                .action(0)
-                .moveXYRel(-10, 0, 60, 0)
-                .then()
-                .moveXYRel(10, 0, 60, 0)
-                .setMasterRepeat(-1)
-                .finalize()
-        } else {
-            standardPlayer.sp_Animations.createAnimation(enemies[i].retrieve())
-                .action(0)
-                .moveXYRel(10, 0, 60, 0)
-                .then()
-                .moveXYRel(-10, 0, 60, 0)
-                .setMasterRepeat(-1)
-                .finalize()
-        }
+    //     this.addChild(enemies[i].retrieve())
+    //     if (odd) {
+    //         standardPlayer.sp_Animations.createAnimation(enemies[i].retrieve())
+    //             .action(0)
+    //             .moveXYRel(-10, 0, 60, 0)
+    //             .then()
+    //             .moveXYRel(10, 0, 60, 0)
+    //             .setMasterRepeat(-1)
+    //             .finalize()
+    //     } else {
+    //         standardPlayer.sp_Animations.createAnimation(enemies[i].retrieve())
+    //             .action(0)
+    //             .moveXYRel(10, 0, 60, 0)
+    //             .then()
+    //             .moveXYRel(-10, 0, 60, 0)
+    //             .setMasterRepeat(-1)
+    //             .finalize()
+    //     }
 
-        this.addChild(player);
-        player.x = (Graphics.width / 2) - (player.width / 2)
-        player.y = Graphics.height - player.height * 1.1
+        
+    // }
+    this.addChild(player);
+        // player.x = (Graphics.width / 2) - (player.width / 2)
+        player.y = (Graphics.height / 2) - (player.height / 2)
+        player.setGridData(3, 2)
         this.player = playerStub;
-        this.enemies = enemies;
-    }
+        this.enemies = []//enemies;
+        this.moveCount = 0;
     this.setControls()
-    this.setEnemyFireTimer()
+    // this.setEnemyFireTimer()
 }
 
 shipMiniScene.prototype.setControls = function () {
-    this.leftCb = () => {
-        if (Input.isPressed('left'))
-            this.moveLeft()
+    this.rightCb = () => {
+        if(Input.isPressed('right') && !Input.isPressed('left'))
+            this.moveRight();
     }
 
-    this.rightCb = () => {
-        if (Input.isPressed('right'))
-            this.moveRight()
+    this.leftCb = () => {
+        if(Input.isPressed('left') && !Input.isPressed('right'))
+            this.moveLeft();
+    }
+
+    this.upCb = () => {
+        
+        if (Input.isPressed('up') && !Input.isPressed('down'))
+            this.moveUp()
+    }
+
+    this.downCb = () => {
+        if (Input.isPressed('down') && !Input.isPressed('up'))
+            this.moveDown()
     }
 
     this.fireCb = () => {
@@ -77,20 +91,105 @@ shipMiniScene.prototype.setControls = function () {
 
     standardPlayer.sp_Core.addBaseUpdate(this.leftCb)
     standardPlayer.sp_Core.addBaseUpdate(this.rightCb)
+    standardPlayer.sp_Core.addBaseUpdate(this.upCb)
+    standardPlayer.sp_Core.addBaseUpdate(this.downCb)
     standardPlayer.sp_Core.addBaseUpdate(this.fireCb)
+    standardPlayer.sp_Core.addBaseUpdate(this.playerMoveCounter.bind(this))
 }
 
-shipMiniScene.prototype.moveLeft = function () {
+shipMiniScene.prototype.playerMoveCounter = function(){
+    let moving = false //this.playerIsMoving()
+    let moveCount = this.moveCount;
+    console.log(this.moveCount)
+    if(moving && Math.abs(moveCount) + 1 < 14){
+        this.moveCount = moving == 'up' ? moveCount - 1 : moveCount + 1
+    } else if(!moving && moveCount != 0){
+        this.moveCount = moveCount > 0 ? moveCount - 1 : moveCount + 1
+        this.updatePlayerSprite()
+        
+    } else if(!moving){
+        this.player.retrieve().setRowCol(0, this.thrust ? 1 : 0)
+        this.thrust = false;
+    }
+}
+
+shipMiniScene.prototype.updatePlayerSprite = function(){
+    let player = this.player.retrieve()
+    
+    player.setRowCol(player.gridData.row, Math.abs(this.moveCount) > 7 ? 1 : 0)
+}
+
+shipMiniScene.prototype.moveUp = function () {
     let player = this.player.retrieve();
-    if (player.x > 0)
-        player.x -= 5
+    let col = this.moveCount < -7 ? 1 : 0;
+    let row = 2;
+    if (player.y > 0)
+        player.y -= 5
+
+    // if(Input.isPressed('left')){
+    //     col = 0;
+    //     row = 0;
+    // }
+    
+    // player.setRowCol(row, col)
+}
+
+shipMiniScene.prototype.moveDown = function () {
+    let player = this.player.retrieve();
+    let col = this.moveCount > 7 ? 1 : 0;
+    let row = 1;
+
+    if (player.y < Graphics.height - player.height)
+        player.y += 5
+
+    // if(Input.isPressed('left')){
+    //     col = 0;
+    //     row = 0;
+    // }
+        
+    
+    // player.setRowCol(row, col)
 }
 
 shipMiniScene.prototype.moveRight = function () {
     let player = this.player.retrieve();
-    if (player.x < Graphics.width - player.width)
-        player.x += 5
+    let row, col;
+    if (player.x + 7 < Graphics.width - player.width)
+        player.x += 7
+
+
+    // if(this.moveCount != 0){
+    //     col = this.moveCount > 7 ? 1 : 0;
+    //     row = player.gridData.row;
+    // } else {
+    //     col = 1;
+    //     row = 0;
+    // }
+    
+    this.thrust = true
+    // player.setRowCol(row, col)
 }
+
+shipMiniScene.prototype.moveLeft = function () {
+    let player = this.player.retrieve();
+    let row, col;
+    if (player.x - 7 > 0)
+        player.x -= 7
+
+
+    // if(this.moveCount != 0){
+    //     col = this.moveCount > 7 ? 1 : 0;
+    //     row = player.gridData.row;
+    // } else {
+    //     col = 0;
+    //     row = 0;
+    // }
+    
+    
+    // player.setRowCol(row, col)
+}
+
+
 
 shipMiniScene.prototype.setEnemyFireTimer = function(){
     let timer = standardPlayer.sp_Timers.createTimer(100, ()=>{this.getTargetGrouping()});
@@ -125,7 +224,7 @@ shipMiniScene.prototype.enemyShotIsCollided = function(){
 
 
     if(standardPlayer.sp_Core.collision(this.target(), scn.player.retrieve())){
-        console.log('player hit')
+        
         //68 204
         //66
     }
@@ -196,20 +295,20 @@ shipMiniScene.prototype.enemyFire = function (enemy) {
 
 
 shipMiniScene.prototype.playerIsMoving = function () {
-    return Input.isPressed('left') ? 'left' : Input.isPressed('right') ? 'right' : false
+    return Input.isPressed('up') ? 'up' : Input.isPressed('down') ? 'down' : false
 }
 
 shipMiniScene.prototype.playerFire = function () {
-    this.getTargetGrouping()
     let result = standardPlayer.sp_Animations.reserveAnimation('pictures/playerFire', (anim) => {
         let origin = this.player.retrieve();
-        anim.target().position.set(origin.x + (origin.width * .5), origin.y)
+        let graphicHeightPadding = anim.target().height / 2;
+        anim.target().position.set(origin.x + origin.width, origin.y + (origin.height / 2) - graphicHeightPadding)
         anim.cacheProps()
 
         this.addChild(anim.target());
         anim
             .action(0)
-            .moveXY(origin.x + (origin.width * .5), 0, 30, 0)
+            .moveXY(Graphics.width, origin.y + (origin.height * .5), 30, 0)
             .setThroughCb(() => {
                 this.playerShotIsCollided.call(anim)
             })

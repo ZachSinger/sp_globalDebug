@@ -56,6 +56,7 @@ shipMiniScene.prototype.onPreloaded = function () {
         this.enemies = enemies;
     }
     this.setControls()
+    this.setEnemyFireTimer()
 }
 
 shipMiniScene.prototype.setControls = function () {
@@ -91,6 +92,14 @@ shipMiniScene.prototype.moveRight = function () {
         player.x += 5
 }
 
+shipMiniScene.prototype.setEnemyFireTimer = function(){
+    let timer = standardPlayer.sp_Timers.createTimer(100, ()=>{this.getTargetGrouping()});
+    
+    timer.setRepeat(-1)
+         .activate()
+    this.enemyShotTimer = timer;
+}
+
 shipMiniScene.prototype.playerShotIsCollided = function () {
     let scn = SceneManager._scene;
     let list = scn.enemies;
@@ -111,7 +120,21 @@ shipMiniScene.prototype.playerShotIsCollided = function () {
     return false
 }
 
+shipMiniScene.prototype.enemyShotIsCollided = function(){
+    let scn = SceneManager._scene;
+
+
+    if(standardPlayer.sp_Core.collision(this.target(), scn.player.retrieve())){
+        console.log('player hit')
+        //68 204
+        //66
+    }
+}
+
 shipMiniScene.prototype.getTargetGrouping = function () {
+    if(!this.enemies.length)
+        this.enemyShotTimer.kill;
+
     let player = this.player.retrieve();
     let width = player.width;
     let moving = this.playerIsMoving()
@@ -136,8 +159,10 @@ shipMiniScene.prototype.getTargetGrouping = function () {
             result.push(list[i]);
     }
 
-    if(result.length)
+    if(result.length){
         this.enemyFire(result[standardPlayer.sp_Core.rndBetween(0, result.length)])
+        this.enemyShotTimer.setTarget(standardPlayer.sp_Core.rndBetween(30, 100))
+    }
 }
 
 shipMiniScene.prototype.enemyFire = function (enemy) {
@@ -154,11 +179,10 @@ shipMiniScene.prototype.enemyFire = function (enemy) {
             .action(0)
             .moveXY(origin.x + (origin.width * .5), Graphics.height, 20, 0)
             .setThroughCb(() => {
-                // this.playerShotIsCollided.call(anim)
+                 this.enemyShotIsCollided.call(anim)
             })
             .setMasterCb(() => {
                 this.removeChild(anim.target())
-                console.log(anim.target())
                 anim.target().sp_image_cache_stub.delete()
             })
             .finalize()

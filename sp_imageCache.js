@@ -37,6 +37,10 @@ standardPlayer.sp_ImageCache.loadSharedSprite = function (url, cb, args) {
     spr.onCacheLoad = cb
     spr.onCacheArgs = args;
     spr.sp_image_cache_stub = stub
+    spr.setRow = this.setRow.bind(spr)
+    spr.setCol = this.setCol.bind(spr)
+    spr.setRowCol = this.setRowCol.bind(spr)
+    spr.setGridData = this.setGridData.bind(spr)
     this.sprites.push(spr)
     this.active = true
 
@@ -57,6 +61,10 @@ standardPlayer.sp_ImageCache.loadSprite = function(url, cb, args){
     spr.onCacheLoad = cb;
     spr.onCacheArgs = args;
     spr.sp_image_cache_stub = stub
+    spr.setRow = this.setRow.bind(spr)
+    spr.setCol = this.setCol.bind(spr)
+    spr.setRowCol = this.setRowCol.bind(spr)
+    spr.setGridData = this.setGridData.bind(spr)
     this.sprites.push(spr)
     this.active = true
 
@@ -104,6 +112,49 @@ standardPlayer.sp_ImageCache.loadBatch = function(name, list, cb, args){
     this.batchArgs.push(args)
 
     return stubs;
+}
+
+standardPlayer.sp_ImageCache.setRow = function(row){
+    let sprite = this;
+    let singleHeight = sprite.height;
+    let singleWidth = sprite.width;
+
+    if(!this.gridData)
+        this.gridData = {row:0, col:0, rowMax:3, colMax:2}
+    console.log(Math.min(row, this.gridData.rowMax))
+    row = Math.max(Math.min(row, this.gridData.rowMax), 0);    
+    this.gridData.row = row;
+
+    sprite.texture.frame = new Rectangle(sprite.texture.frame.x, singleHeight * row, singleWidth, singleHeight)
+}
+
+standardPlayer.sp_ImageCache.setCol = function(col){
+    let sprite = this;
+    let singleHeight = sprite.height;
+    let singleWidth = sprite.width;
+
+    if(!this.gridData)
+        this.gridData = {row:0, col:0, rowMax:3, colMax:2}
+    console.log(Math.min(col, this.gridData.colMax))
+    col = Math.max(Math.min(col, this.gridData.colMax), 0);    
+    this.gridData.col = col;
+
+    sprite.texture.frame = new Rectangle( singleWidth * col, sprite.texture.frame.y, singleWidth, singleHeight)
+}
+
+standardPlayer.sp_ImageCache.setRowCol = function(row, col){
+    this.setRow(row);
+    this.setCol(col);
+}
+
+standardPlayer.sp_ImageCache.setGridData = function(rows, cols){
+    let sprite = this;
+
+    if(!this.gridData)
+        this.gridData = {row:0, col:0, rowMax:rows - 1, colMax:cols - 1}
+
+    sprite.texture.frame = new Rectangle(0, 0, sprite.texture.baseTexture.width / cols, sprite.texture.baseTexture.height / rows)
+        return this;
 }
 
 standardPlayer.sp_ImageCache.loadSharedBatch = function(name, list, cb, args){

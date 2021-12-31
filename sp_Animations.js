@@ -7,10 +7,10 @@ standardPlayer.sp_Animations = standardPlayer.sp_Animations || { animations: [],
 standardPlayer.sp_Animations.Parameters = PluginManager.parameters('standardPlayer.sp_Animations');
 
 standardPlayer.sp_Core.addBaseUpdate(() => {
-    requestAnimationFrame(()=>{
-    let thisObject = standardPlayer.sp_Animations;
-    if (thisObject.active)
-        thisObject.run();
+    requestAnimationFrame(() => {
+        let thisObject = standardPlayer.sp_Animations;
+        if (thisObject.active)
+            thisObject.run();
     })
 })
 
@@ -22,25 +22,56 @@ standardPlayer.sp_Animations.createAnimation = function (target) {
     return anim;
 }
 
-standardPlayer.sp_Animations.reserveAnimation = function(url, cb) {
+standardPlayer.sp_Animations.reserveAnimation = function (url, cb) {
     let stub = standardPlayer.sp_ImageCache.loadSprite(url, cb);
 
-    stub.retrieve().onCacheArgs = this.createAnimation(()=>{return stub.retrieve()})
-    // anim.reserved = true;
-    // this.addAnim(anim)
-    // return anim;
+    stub.retrieve().onCacheArgs = this.createAnimation(() => { return stub.retrieve() })
+
     return stub
 }
 
-standardPlayer.sp_Animations.reserveAnimationShared = function(url, cb) {
+standardPlayer.sp_Animations.reserveAnimationShared = function (url, cb) {
     let stub = standardPlayer.sp_ImageCache.loadSharedSprite(url, cb);
 
-    stub.retrieve().onCacheArgs = this.createAnimation(()=>{return stub.retrieve()})
-    // anim.reserved = true;
-    // this.addAnim(anim)
-    // return anim;
+    stub.retrieve().onCacheArgs = this.createAnimation(() => { return stub.retrieve() })
+
     return stub
 
+}
+
+standardPlayer.sp_Animations.createTemplate = function () {
+    let target = {
+        'x': 0,
+        'y': 0,
+        'width': 0,
+        'height': 0,
+        'scale': {},
+        'alpha': 0,
+        'rotation': 0
+    }
+    target.scale.x = 0;
+    target.scale.y = 0;
+
+    return new templateAnimation(target);
+}
+
+standardPlayer.sp_Animations.createFromTemplate = function(template, stub){
+    let anim = this.createAnimation(()=>{return stub.retrieve()})
+
+    anim.actions = template.actions
+    this.copyTemplateActions(anim)
+    template.prepareAnimation.call(anim)
+    return anim
+}
+
+standardPlayer.sp_Animations.copyTemplateActions = function(anim){
+    let actions = anim.actions
+    let length = actions.length;
+    
+
+    for(let i = 0; i < length; i++){
+        actions[i].animation = anim
+    }
 }
 
 standardPlayer.sp_Animations.addAnim = function (anim) {
@@ -56,13 +87,13 @@ standardPlayer.sp_Animations.run = function () {
     // console.log('running animations master')
 
     for (let i = 0; i < length; i++) {
-        if(!list[i].allComplete() || !list[i].actions.length){
+        if (!list[i].allComplete() || !list[i].actions.length) {
             this.runActions(list[i])
             results.push(list[i])
         }
-            
+
     }
-    
+
     this.animations = results
 }
 
@@ -94,12 +125,12 @@ class spAnimation {
         this.cacheProps();
     }
 
-    target(){
+    target() {
         return this._target;
     }
 
-    setTarget(target){
-        if(typeof target == 'function'){           
+    setTarget(target) {
+        if (typeof target == 'function') {
             this.target = target
         } else {
             this._target = target
@@ -112,6 +143,7 @@ class spAnimation {
     }
 
     extractInitialProps() {
+        console.log(this.target())
         let target = this.target();
         let props = {
             'x': target.x,
@@ -127,17 +159,17 @@ class spAnimation {
         return props;
     }
 
-    checkPreload(){
-        if(this.reserved){
-            if(this.isPreloaded){
+    checkPreload() {
+        if (this.reserved) {
+            if (this.isPreloaded) {
                 return true
             } else {
                 return false
             }
 
-        } 
-            return true
-        
+        }
+        return true
+
     }
 
     action(index) {
@@ -160,8 +192,8 @@ class spAnimation {
         let list = this.actions;
         let length = list.length;
 
-        for(let i = 0; i < length; i++){
-            if(list[i].active){
+        for (let i = 0; i < length; i++) {
+            if (list[i].active) {
                 complete = false
             }
         }
@@ -173,6 +205,31 @@ class spAnimation {
         this.active = true;
         this.actions.forEach(action => action.activate())
     }
+
+}
+
+/* ===================================================================================================
+        templateAnimation class
+ ===================================================================================================*/
+
+class templateAnimation extends spAnimation{
+    constructor(target){
+        super(target)
+    }
+
+    create(stub){
+        return standardPlayer.sp_Animations.createFromTemplate(this, stub)
+    }
+
+    prepareAnimation(){
+        console.log(this)
+        this.actions.forEach((action) => {
+            for(let i = 0; i < action.steps.length; i++){
+                action.prepareStep(i);
+            }
+        })
+    }
+
 
 }
 
@@ -193,9 +250,9 @@ class sp_Action {
         this.repeat = [0];
         this.repeatCache = [0]
         this.masterRepeat = 0;
-        this.throughCb = ()=>{};
-        this.stepCb = [()=>{}]
-        this.masterCb = ()=>{}
+        this.throughCb = () => { };
+        this.stepCb = [() => { }]
+        this.masterCb = () => { }
         this.runCondition = [() => { return true }];
         this.masterRunCondition = () => { return true };
     }
@@ -242,7 +299,7 @@ class sp_Action {
         let step = this.template();
 
         step.rotation = value;
-        
+
 
         this.dur[this.index] = dur;
         this.pad[this.index] = pad;
@@ -333,12 +390,12 @@ class sp_Action {
         let step = this.step();
         let current;
         let cb = this.getLastPropValue;
-        
+
         // if(keys[0] == 'wait')
         for (let i = 0; i < length; i++) {
             current = keys[i];
-            if(current == 'scale'){
-                step[current] = {x:[], y:[]}
+            if (current == 'scale') {
+                step[current] = { x: [], y: [] }
                 step[current].x = standardPlayer.sp_Core.plotLinearPath(
                     cb.call(this, 'scale').x,
                     template[current].x,
@@ -354,7 +411,7 @@ class sp_Action {
                 )
                 continue
             }
-            
+
             step[current] = standardPlayer.sp_Core.plotLinearPath
                 (
                     cb.call(this, current),
@@ -366,18 +423,18 @@ class sp_Action {
         return this
     }
 
-    plotResetPath(){
+    plotResetPath() {
         let template = this.animation.initialCache;
         let keys = Object.keys(template)
         let length = keys.length;
         let step = this.step();
         let current;
-        
+
         // if(keys[0] == 'wait')
         for (let i = 0; i < length; i++) {
             current = keys[i];
-            if(current == 'scale'){
-                step[current] = {x:[], y:[]}
+            if (current == 'scale') {
+                step[current] = { x: [], y: [] }
                 step[current].x = standardPlayer.sp_Core.plotLinearPath(
                     this.target().scale.x,
                     template[current].x,
@@ -393,7 +450,7 @@ class sp_Action {
                 )
                 continue
             }
-            
+
             step[current] = standardPlayer.sp_Core.plotLinearPath
                 (
                     this.target()[current],
@@ -405,7 +462,7 @@ class sp_Action {
         return this
     }
 
-   
+
 
     setRunCondition(cb) {
         this.runCondition[this.index] = cb;
@@ -461,21 +518,21 @@ class sp_Action {
         }
     }
 
-    setStepCb(cb){
+    setStepCb(cb) {
         this.stepCb[this.index] = cb;
         return this;
     }
 
-    setMasterCb(cb){
+    setMasterCb(cb) {
         this.masterCb = cb;
         return this
     }
 
-    runStepCb(){
+    runStepCb() {
         this.stepCb[this.index - 1]()
     }
 
-    setThroughCb(cb){
+    setThroughCb(cb) {
         this.throughCb = cb;
         return this
     }
@@ -499,8 +556,8 @@ class sp_Action {
 
     getLastPropValue(prop) {
         let templates = this.stepTemplate;
-        for(let i = this.index - 1; i >= 0; i--){
-            if(typeof templates[i][prop] != 'undefined')
+        for (let i = this.index - 1; i >= 0; i--) {
+            if (typeof templates[i][prop] != 'undefined')
                 return templates[i][prop]
         }
 
@@ -511,7 +568,7 @@ class sp_Action {
     isResetPosition() {
         let step = this.template();
 
-        if(step.resetPosition){
+        if (step.resetPosition) {
             step.resetPosition = false
             return true
         }
@@ -522,16 +579,16 @@ class sp_Action {
     hasWait() {
         let step = this.template();
 
-        if (typeof step.wait != 'undefined') {          
+        if (typeof step.wait != 'undefined') {
             if (step.wait-- > 0) {
-                
+
                 return true;
             }
-            
+
             this.index++;
             this.tick = 0;
             this.updateCache();
-            
+
         }
         return false;
     }
@@ -547,7 +604,7 @@ class sp_Action {
         if (this.hasWait())
             return;
 
-        if (this.isResetPosition()){
+        if (this.isResetPosition()) {
             this.plotResetPath()
             step = this.step()
             props = Object.keys(step);
@@ -602,6 +659,7 @@ class sp_Action {
     }
 
     updateScale(props, index) {
+        console.log(this.target())
         this.target().scale.set(props.x[index], props.y[index])
     }
 
@@ -612,7 +670,7 @@ class sp_Action {
         this.active = true;
     }
 
-    finalize(){
+    finalize() {
         this.prepareStep()
         this.animation.activate()
     }
@@ -624,12 +682,14 @@ class sp_Action {
         this.repeatCache.push(0);
         this.steps[this.index] = {}//this.getPositionData()
         this.stepTemplate[this.index] = {}//Object.assign({}, this.stepTemplate[this.index - 1]);
-        this.stepCb[this.index] = ()=>{};
+        this.stepCb[this.index] = () => { };
         this.runCondition.push(() => { return true })
         return this;
     }
 
 }
+
+
 
 
 
@@ -642,43 +702,52 @@ class sp_Action {
 function testScript() {
     // window.grph = new PIXI.Graphics(); grph.beginFill(0xFFFFFF); grph.drawRect(0, 0, 100, 100);
     // SceneManager._scene.addChild(grph)
-    let result = standardPlayer.sp_Animations.reserveAnimation('pictures/Actor1_1', (anim)=>{
+    // let result = standardPlayer.sp_Animations.reserveAnimation('pictures/Actor1_1', (anim) => {
+       let anim = standardPlayer.sp_Animations.createTemplate();
 
-        SceneManager._scene.addChild(anim.target())
         anim
-        .action(0)
-        .moveXY(Graphics.width * .4, Graphics.height * .5, 100, 0)
-        .setScale(1.4, 2.1, 100, 0)
-        .then()
-        // .setRotation(10, 100, 0)
-        // .then()
-        .setWait(100)
-        .moveXYRel(100, 100, 100, 0)
-        .setScale(.8, 1.1, 100, 0)
-        .then()
-        .moveXYRel(200, 50, 30, 0)
-        .setScale(2.4, 3.1, 30, 0)
-        .then()
-        // .setRotation(14, 100, 0)
-        .moveXYRel(100, -50, 100, 0)
-        .setScale(4.4, 3.5, 100, 0)
-        .then()
-        .resetPosition(100, 0)
+            .action(0)
+            .moveXY(Graphics.width * .4, Graphics.height * .5, 100, 0)
+            .setScale(1.4, 2.1, 100, 0)
+            .then()
+            // .setRotation(10, 100, 0)
+            // .then()
+            .setWait(100)
+            .moveXYRel(100, 100, 100, 0)
+            .setScale(.8, 1.1, 100, 0)
+            .then()
+            .moveXYRel(200, 50, 30, 0)
+            .setScale(2.4, 3.1, 30, 0)
+            .then()
+            // .setRotation(14, 100, 0)
+            .moveXYRel(100, -50, 100, 0)
+            .setScale(4.4, 3.5, 100, 0)
+            .then()
+            .resetPosition(100, 0)
+
+
+        anim
+            .action(1)
+            .setRotation(15, 100, 0)
+            .then()
+            .setRotation(-15, 100, 0)
+            .prepareStep()
+
+
+        anim.activate();
+    
+    let spr = standardPlayer.sp_ImageCache.loadSprite('pictures/Actor1_1', ()=>{
+        SceneManager._scene.addChild(spr.retrieve())
+        let realAnim = anim.create(spr)
+        console.log(realAnim.target())
+        realAnim.activate()
+            
         
-
-    anim
-        .action(1)
-        .setRotation(15, 100, 0)
-        .then()
-        .setRotation(-15, 100, 0)
-        .prepareStep()
-    
-
-    anim.activate();
-    });
-    
-    window['testanim'] = result
+    })
+    return anim;
 }
+
+
 
 
 

@@ -352,3 +352,52 @@ standardPlayer.sp_Core.rndBetween = function(min, max, includingMax) {
     max = includingMax ? max + 1 : max;
   return Math.floor(Math.random() * (max - min) ) + min;
 }
+
+standardPlayer.sp_Core.angle = function(cx, cy, ex, ey) {
+    let dy = 0;
+    let dx = 0;
+
+    if(arguments.length < 3){
+        dy = cy.y - cx.y;
+        dx = cy.x - cx.x;
+    } else {
+        dy = ey - cy;
+        dx = ex - cx;
+    }
+    let theta = Math.atan2(dy, dx); //to radians
+
+    theta *= 180 / Math.PI; //to degrees
+    //if (theta < 0) theta = 360 + theta; // range [0, 360)
+    return theta;
+  }
+
+
+  standardPlayer.sp_Core.moveByAngle = function(obj, spd){
+    let angle = obj.rotation
+    let dx = Math.cos(angle) * spd;
+    let dy = Math.sin(angle) * spd;
+
+    obj.x += dx;
+    obj.y += dy;
+  }
+
+  //Convert Graphics Object to Sprite
+  standardPlayer.sp_Core.GraphToSprite = function(g){
+    let t = new PIXI.Texture(this.GraphToTexture(g))
+
+    return new PIXI.Sprite(t)
+}
+
+//convert Bitmap to Sprite * uses function base64ArrayBuffer, credit and license listed below
+standardPlayer.sp_Core.BmpToSprite = function(b){
+    let t = new PIXI.Texture.from(b.__canvas)
+
+    return new PIXI.Sprite(t)
+}
+
+//Convert Graphics Object to Texture
+standardPlayer.sp_Core.GraphToTexture = function(g){
+    let r = Graphics.app.renderer;
+    
+    return r.generateTexture(g)
+}

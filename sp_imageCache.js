@@ -23,7 +23,6 @@ standardPlayer.sp_Core.addBaseUpdate(() => {
 standardPlayer.sp_ImageCache.Parameters = PluginManager.parameters('standardPlayer.sp_ImageCache');
 
 standardPlayer.sp_ImageCache.loadSharedSprite = function (url, cb, args) {
-    console.log('loading shared sprite')
     let id = `sprite:${this.generateUUID()}`
     let stub = new spriteStub(id);
     let spr = new PIXI.Sprite.from(`img/${url}.png`);
@@ -41,6 +40,7 @@ standardPlayer.sp_ImageCache.loadSharedSprite = function (url, cb, args) {
     spr.setCol = this.setCol.bind(spr)
     spr.setRowCol = this.setRowCol.bind(spr)
     spr.setGridData = this.setGridData.bind(spr)
+    spr.isShared = true;
     this.sprites.push(spr)
     this.active = true
 
@@ -184,7 +184,7 @@ standardPlayer.sp_ImageCache.loadNSharedSprites = function(name, url, qty, cb, a
 }
 
 standardPlayer.sp_ImageCache.createTexture = function(url){
-    if(typeof PIXI.utils.TextureCache[url] != 'undefined'){
+    if(typeof PIXI.utils.TextureCache[url] != 'undefined'){ //If the texture exists
         return new PIXI.Texture(PIXI.utils.TextureCache[url])
     }
     return new PIXI.Texture.from(url)
@@ -224,11 +224,16 @@ standardPlayer.sp_ImageCache.createText = function(content){
 standardPlayer.sp_ImageCache.textureInUse = function(stub){
     let texture = stub.retrieve().texture;
     let baseTexture = texture.baseTexture;
+    let shared = stub.retrieve().isShared;
     let list = this.sprites;
     let length = list.length;
 
     for(let i = 0; i < length; i++){
-        if(list[i].texture.baseTexture === baseTexture && list[i].texture !== texture){ 
+        if(shared){
+            if(list[i].texture.baseTexture === baseTexture && list[i].sp_image_cache_stub.sp_image_cacheId !== stub.sp_image_cacheId){
+                    return true
+            }
+        } else if(list[i].texture.baseTexture === baseTexture && list[i].texture !== texture){ 
             if(list[i].parent){
                 return true
             }
@@ -247,7 +252,7 @@ standardPlayer.sp_ImageCache.deleteSprite = function(stub){
     for(let i = 0; i < length; i++){
         if(list[i].sp_image_cacheId == stub.sp_image_cacheId){
             list[i].destroy(!this.textureInUse(stub)) 
-            list[i] = undefined
+            list[i] = undefined    
         } else {
             newList.push(list[i])
         }
@@ -388,7 +393,7 @@ standardPlayer.sp_ImageCache.allSpritesLoaded = function(){
             if(current.sp_image_cache_batch){
                     batches[current.sp_image_cache_batch] = true;
                 }
-            if(current.texture.baseTexture.valid){
+            if(current.texture && current.texture.baseTexture && current.texture.baseTexture.valid){
                 current.sp_image_loaded = true;
                 current.onCacheLoad(current.onCacheArgs);
             } else {

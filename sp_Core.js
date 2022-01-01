@@ -32,8 +32,6 @@ standardPlayer.sp_Core.addBaseUpdate = function (method, post, index) {
 }
 
 standardPlayer.sp_Core.addMapUpdate = function (method, post, index) {
-    console.log(this === standardPlayer)
-    console.log(this === standardPlayer.sp_Core)
     let updates = post ?
         this.updateContainer._sceneMapUpdatesPost :
         this.updateContainer._sceneMapUpdatesPre;
@@ -221,6 +219,16 @@ standardPlayer.sp_Core.toggleSelectKey = function (enable) {
 
 standardPlayer.sp_Core.toggleKeys = function (vals, enable) {
     vals.forEach(item => this.toggleAction(item, enable));
+}
+
+standardPlayer.sp_Core.reassignKey = function(keyToReplace, replacement){
+    let keys = Object.keys(Input.keyMapper)
+    let length = keys.length;
+
+    for(let i = 0; i < length; i++){
+        if(Input.keyMapper[keys[i]] == keyToReplace)
+            Input.keyMapper[keys[i]] = replacement
+    }
 }
 
 

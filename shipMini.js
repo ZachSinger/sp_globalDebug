@@ -11,6 +11,7 @@ shipMiniScene.prototype.initialize = function () {
     arr.push('pictures/playerFire');
     this.preload(arr)
     Scene_Base.prototype.initialize.call(this)
+    this._runner = Game_Runner;
 }
 
 shipMiniScene.prototype.onPreloaded = function () {
@@ -18,176 +19,16 @@ shipMiniScene.prototype.onPreloaded = function () {
     let enemies = stubs.slice(0, 30)
     let playerStub = stubs[30];
     let player = playerStub.retrieve()
-    let x, y;
-    let sWidth = (Graphics.width * .1);
-    let sHeight = (Graphics.height * .4) / 3;
-    let xPadding = enemies[0].retrieve().width / 2
-    let odd = false;
 
-    // for (let i = 0; i < enemies.length; i++) {
-    //     odd = Math.floor(i / 10) % 2 == 0;
-    //     x = sWidth * (i % 10) + xPadding;
-    //     y = sHeight * Math.floor(i / 10);
-    //     enemies[i].retrieve().position.set(x, y)
-
-    //     this.addChild(enemies[i].retrieve())
-    //     if (odd) {
-    //         standardPlayer.sp_Animations.createAnimation(enemies[i].retrieve())
-    //             .action(0)
-    //             .moveXYRel(-10, 0, 60, 0)
-    //             .then()
-    //             .moveXYRel(10, 0, 60, 0)
-    //             .setMasterRepeat(-1)
-    //             .finalize()
-    //     } else {
-    //         standardPlayer.sp_Animations.createAnimation(enemies[i].retrieve())
-    //             .action(0)
-    //             .moveXYRel(10, 0, 60, 0)
-    //             .then()
-    //             .moveXYRel(-10, 0, 60, 0)
-    //             .setMasterRepeat(-1)
-    //             .finalize()
-    //     }
-
-
-    // }
-    this.weapon = new machineGun()
     this.addChild(player);
-    // player.x = (Graphics.width / 2) - (player.width / 2)
     player.y = (Graphics.height / 2) - (player.height / 2)
     player.setGridData(3, 2)
-    this.player = playerStub;
-    this.enemies = []//enemies;
+    this._runner.player = playerStub;
+    this.enemies = []
     this.moveCount = 0;
-    this.setControls()
-    // this.setEnemyFireTimer()
+    this._runner.initialize()
 }
 
-shipMiniScene.prototype.setControls = function () {
-    this.rightCb = () => {
-        if (Input.isPressed('right') && !Input.isPressed('left'))
-            this.moveRight();
-    }
-
-    this.leftCb = () => {
-        if (Input.isPressed('left') && !Input.isPressed('right'))
-            this.moveLeft();
-    }
-
-    this.upCb = () => {
-
-        if (Input.isPressed('up') && !Input.isPressed('down'))
-            this.moveUp()
-    }
-
-    this.downCb = () => {
-        if (Input.isPressed('down') && !Input.isPressed('up'))
-            this.moveDown()
-    }
-
-    this.fireCb = () => {
-        if (Input.isTriggered('ok'))
-            this.playerFire()
-    }
-
-    standardPlayer.sp_Core.addBaseUpdate(this.leftCb)
-    standardPlayer.sp_Core.addBaseUpdate(this.rightCb)
-    standardPlayer.sp_Core.addBaseUpdate(this.upCb)
-    standardPlayer.sp_Core.addBaseUpdate(this.downCb)
-    standardPlayer.sp_Core.addBaseUpdate(this.fireCb)
-    standardPlayer.sp_Core.addBaseUpdate(this.playerMoveCounter.bind(this))
-}
-
-shipMiniScene.prototype.playerMoveCounter = function () {
-    let moving = false //this.playerIsMoving()
-    let moveCount = this.moveCount;
-    if (moving && Math.abs(moveCount) + 1 < 14) {
-        this.moveCount = moving == 'up' ? moveCount - 1 : moveCount + 1
-    } else if (!moving && moveCount != 0) {
-        this.moveCount = moveCount > 0 ? moveCount - 1 : moveCount + 1
-        this.updatePlayerSprite()
-
-    } else if (!moving) {
-        this.player.retrieve().setRowCol(0, this.thrust ? 1 : 0)
-        this.thrust = false;
-    }
-}
-
-shipMiniScene.prototype.updatePlayerSprite = function () {
-    let player = this.player.retrieve()
-
-    player.setRowCol(player.gridData.row, Math.abs(this.moveCount) > 7 ? 1 : 0)
-}
-
-shipMiniScene.prototype.moveUp = function () {
-    let player = this.player.retrieve();
-    let col = this.moveCount < -7 ? 1 : 0;
-    let row = 2;
-    if (player.y > 0)
-        player.y -= 5
-
-    // if(Input.isPressed('left')){
-    //     col = 0;
-    //     row = 0;
-    // }
-
-    // player.setRowCol(row, col)
-}
-
-shipMiniScene.prototype.moveDown = function () {
-    let player = this.player.retrieve();
-    let col = this.moveCount > 7 ? 1 : 0;
-    let row = 1;
-
-    if (player.y < Graphics.height - player.height)
-        player.y += 5
-
-    // if(Input.isPressed('left')){
-    //     col = 0;
-    //     row = 0;
-    // }
-
-
-    // player.setRowCol(row, col)
-}
-
-shipMiniScene.prototype.moveRight = function () {
-    let player = this.player.retrieve();
-    let row, col;
-    if (player.x + 7 < Graphics.width - player.width)
-        player.x += 7
-
-
-    // if(this.moveCount != 0){
-    //     col = this.moveCount > 7 ? 1 : 0;
-    //     row = player.gridData.row;
-    // } else {
-    //     col = 1;
-    //     row = 0;
-    // }
-
-    this.thrust = true
-    // player.setRowCol(row, col)
-}
-
-shipMiniScene.prototype.moveLeft = function () {
-    let player = this.player.retrieve();
-    let row, col;
-    if (player.x - 7 > 0)
-        player.x -= 7
-
-
-    // if(this.moveCount != 0){
-    //     col = this.moveCount > 7 ? 1 : 0;
-    //     row = player.gridData.row;
-    // } else {
-    //     col = 0;
-    //     row = 0;
-    // }
-
-
-    // player.setRowCol(row, col)
-}
 
 
 
@@ -199,25 +40,6 @@ shipMiniScene.prototype.setEnemyFireTimer = function () {
     this.enemyShotTimer = timer;
 }
 
-shipMiniScene.prototype.playerShotIsCollided = function () {
-    let scn = SceneManager._scene;
-    let list = scn.enemies;
-    let length = list.length;
-    for (let i = 0; i < length; i++) {
-        if (standardPlayer.sp_Core.collision(this.target(), list[i].retrieve())) {
-            scn.removeChild(list[i].retrieve())
-            list[i].retrieve().anim.kill = true;
-            list[i].delete();
-            this.kill = true;
-            scn.removeChild(this.target())
-            list.splice(i, 1);
-            return true
-        }
-
-    }
-
-    return false
-}
 
 shipMiniScene.prototype.enemyShotIsCollided = function () {
     let scn = SceneManager._scene;
@@ -225,44 +47,9 @@ shipMiniScene.prototype.enemyShotIsCollided = function () {
 
     if (standardPlayer.sp_Core.collision(this.target(), scn.player.retrieve())) {
 
-        //68 204
-        //66
     }
 }
 
-shipMiniScene.prototype.getTargetGrouping = function () {
-    if (!this.enemies.length)
-        this.enemyShotTimer.kill;
-
-    let player = this.player.retrieve();
-    let width = player.width;
-    let moving = this.playerIsMoving()
-    let x = moving ? moving == 'right' ? player.x + width : player.x - (width * 1.5) : player.x - (width * .5)
-    let rectangle = new Rectangle(x, 0, width * 2, Graphics.height);
-    let list = this.enemies;
-    let length = list.length;
-    let result = [];
-
-    // let grph = new PIXI.Graphics;
-
-    // console.log(moving)
-
-    // grph.lineStyle(1, 0xFFFFFF, 1)
-    // grph.drawRect(x, 0, width * 2, Graphics.height)
-    // if(this.boxGrouping)
-    //     this.removeChild(this.boxGrouping)
-    // this.addChild(grph)
-
-    for (let i = 0; i < length; i++) {
-        if (standardPlayer.sp_Core.collision(list[i].retrieve(), rectangle))
-            result.push(list[i]);
-    }
-
-    if (result.length) {
-        this.enemyFire(result[standardPlayer.sp_Core.rndBetween(0, result.length)])
-        this.enemyShotTimer.setTarget(standardPlayer.sp_Core.rndBetween(30, 100))
-    }
-}
 
 shipMiniScene.prototype.enemyFire = function (enemy) {
     standardPlayer.sp_Animations.reserveAnimation('pictures/playerFire', (anim) => {
@@ -294,34 +81,6 @@ shipMiniScene.prototype.enemyFire = function (enemy) {
 }
 
 
-shipMiniScene.prototype.playerIsMoving = function () {
-    return Input.isPressed('up') ? 'up' : Input.isPressed('down') ? 'down' : false
-}
-
-shipMiniScene.prototype.playerFire = function () {
-    // let result = standardPlayer.sp_Animations.reserveAnimationShared('pictures/playerFire', (anim) => {
-    //     let origin = this.player.retrieve();
-    //     let graphicHeightPadding = anim.target().height / 2;
-    //     anim.target().position.set(origin.x + origin.width, origin.y + (origin.height / 2) - graphicHeightPadding)
-    //     anim.cacheProps()
-
-    //     this.addChild(anim.target());
-    //     anim
-    //         .action(0)
-    //         .moveXY(Graphics.width, origin.y + (origin.height * .5), 30, 0)
-    //         .setThroughCb(() => {
-    //             this.playerShotIsCollided.call(anim)
-    //         })
-    //         .setMasterCb(() => {
-    //             this.removeChild(anim.target())
-    //             console.log(anim.target())
-    //             anim.target().sp_image_cache_stub.delete()
-    //         })
-    //         .finalize()
-    // })
-
-    this.weapon.fire();
-}
 
 
 class shipWeapon {
@@ -347,10 +106,10 @@ class machineGun extends shipWeapon {
 
         for (let i = 0; i <= this.stage; i++) {
             standardPlayer.sp_Animations.reserveAnimationShared(this.image(), (anim) => {
-                let origin = scn.player.retrieve();
+                let origin = scn._runner.player.retrieve();
                 let graphicHeightPadding = anim.target().height / 2;
                 buff = anim.target().height;
-                startY = this.stage ? ((buff * this.stage) * -1) + (buff * .5 * this.stage): 0
+                startY = this.stage ? ((buff * this.stage) * -1) + (buff * .5 * this.stage) : 0
                 anim.target().position.set(origin.x + origin.width, (startY + buff * i) + origin.y + (origin.height / 2) - graphicHeightPadding)
                 anim.cacheProps()
 
@@ -359,7 +118,7 @@ class machineGun extends shipWeapon {
                     .action(0)
                     .moveXY(Graphics.width, (startY + buff * i) + origin.y + (origin.height * .5), 30, 0)
                     .setThroughCb(() => {
-                        scn.playerShotIsCollided.call(anim)
+                        scn._runner.playerShotIsCollided.call(anim)
                     })
                     .setMasterCb(() => {
                         scn.removeChild(anim.target())
@@ -381,79 +140,271 @@ class spreader extends shipWeapon {
         let buff,
             startY;
 
-            //top shot
-            standardPlayer.sp_Animations.reserveAnimationShared(this.image(), (anim) => {
-                let origin = scn.player.retrieve();
-                let graphicHeightPadding = anim.target().height / 2;
-                let xDist = Graphics.width - (origin.x + origin.width);
-                let factor = xDist / Graphics.width;
-                let speed = 30 * factor
-                
-                anim.target().position.set(origin.x + origin.width, (origin.y + (origin.height / 2) - graphicHeightPadding))
-                anim.cacheProps()
+        //top shot
+        standardPlayer.sp_Animations.reserveAnimationShared(this.image(), (anim) => {
+            let origin = scn.player.retrieve();
+            let graphicHeightPadding = anim.target().height / 2;
+            let xDist = Graphics.width - (origin.x + origin.width);
+            let factor = xDist / Graphics.width;
+            let speed = 30 * factor
 
-                scn.addChild(anim.target());
-                anim
-                    .action(0)
-                    .moveXYRel(xDist, ((Graphics.height * .1) * -1) * factor, speed, 0)
-                    .setThroughCb(() => {
-                        scn.playerShotIsCollided.call(anim)
-                    })
-                    .setMasterCb(() => {
-                        scn.removeChild(anim.target())
-                        anim.target().sp_image_cache_stub.delete()
-                    })
-                    .finalize()
-            })
+            anim.target().position.set(origin.x + origin.width, (origin.y + (origin.height / 2) - graphicHeightPadding))
+            anim.cacheProps()
 
-            //middle shot
-            standardPlayer.sp_Animations.reserveAnimationShared(this.image(), (anim) => {
-                let origin = scn.player.retrieve();
-                let graphicHeightPadding = anim.target().height / 2;
-                let xDist = Graphics.width - (origin.x + origin.width);
-                let speed = 30 * (xDist / Graphics.width)
-                
-                anim.target().position.set(origin.x + origin.width, origin.y + (origin.height / 2) - graphicHeightPadding)
-                anim.cacheProps()
+            scn.addChild(anim.target());
+            anim
+                .action(0)
+                .moveXYRel(xDist, ((Graphics.height * .1) * -1) * factor, speed, 0)
+                .setThroughCb(() => {
+                    scn.playerShotIsCollided.call(anim)
+                })
+                .setMasterCb(() => {
+                    scn.removeChild(anim.target())
+                    anim.target().sp_image_cache_stub.delete()
+                })
+                .finalize()
+        })
 
-                scn.addChild(anim.target());
-                anim
-                    .action(0)
-                    .moveXYRel(xDist, 0, speed, 0)
-                    .setThroughCb(() => {
-                        scn.playerShotIsCollided.call(anim)
-                    })
-                    .setMasterCb(() => {
-                        scn.removeChild(anim.target())
-                        anim.target().sp_image_cache_stub.delete()
-                    })
-                    .finalize()
-            })
+        //middle shot
+        standardPlayer.sp_Animations.reserveAnimationShared(this.image(), (anim) => {
+            let origin = scn.player.retrieve();
+            let graphicHeightPadding = anim.target().height / 2;
+            let xDist = Graphics.width - (origin.x + origin.width);
+            let speed = 30 * (xDist / Graphics.width)
 
-            //bottom shot 
-            standardPlayer.sp_Animations.reserveAnimationShared(this.image(), (anim) => {
-                let origin = scn.player.retrieve();
-                let graphicHeightPadding = anim.target().height / 2;
-                let xDist = Graphics.width - (origin.x + origin.width);
-                let factor = xDist / Graphics.width;
-                let speed = 30 * factor
-                
-                anim.target().position.set(origin.x + origin.width, origin.y + (origin.height / 2) - graphicHeightPadding)
-                anim.cacheProps()
+            anim.target().position.set(origin.x + origin.width, origin.y + (origin.height / 2) - graphicHeightPadding)
+            anim.cacheProps()
 
-                scn.addChild(anim.target());
-                anim
-                    .action(0)
-                    .moveXYRel(xDist, (Graphics.height * .1) * factor, speed, 0)
-                    .setThroughCb(() => {
-                        scn.playerShotIsCollided.call(anim)
-                    })
-                    .setMasterCb(() => {
-                        scn.removeChild(anim.target())
-                        anim.target().sp_image_cache_stub.delete()
-                    })
-                    .finalize()
-            })
-        
+            scn.addChild(anim.target());
+            anim
+                .action(0)
+                .moveXYRel(xDist, 0, speed, 0)
+                .setThroughCb(() => {
+                    scn.playerShotIsCollided.call(anim)
+                })
+                .setMasterCb(() => {
+                    scn.removeChild(anim.target())
+                    anim.target().sp_image_cache_stub.delete()
+                })
+                .finalize()
+        })
+
+        //bottom shot 
+        standardPlayer.sp_Animations.reserveAnimationShared(this.image(), (anim) => {
+            let origin = scn.player.retrieve();
+            let graphicHeightPadding = anim.target().height / 2;
+            let xDist = Graphics.width - (origin.x + origin.width);
+            let factor = xDist / Graphics.width;
+            let speed = 30 * factor
+
+            anim.target().position.set(origin.x + origin.width, origin.y + (origin.height / 2) - graphicHeightPadding)
+            anim.cacheProps()
+
+            scn.addChild(anim.target());
+            anim
+                .action(0)
+                .moveXYRel(xDist, (Graphics.height * .1) * factor, speed, 0)
+                .setThroughCb(() => {
+                    scn.playerShotIsCollided.call(anim)
+                })
+                .setMasterCb(() => {
+                    scn.removeChild(anim.target())
+                    anim.target().sp_image_cache_stub.delete()
+                })
+                .finalize()
+        })
+
     }
+}
+
+
+//ControlHandler
+Input._onKeyDown = function (event) {
+    if (this._shouldPreventDefault(event.keyCode)) {
+        event.preventDefault();
+    }
+    if (event.keyCode === 144) {
+        // Numlock
+        this.clear();
+    }
+    const buttonName = this.keyMapper[event.keyCode];
+    if (buttonName) {
+        this._currentState[buttonName] = true;
+        this.updateLatestAxis(buttonName)
+    }
+    this._lastKeyCode = event.keyCode
+};
+
+Input._onKeyUp = function (event) {
+    const buttonName = this.keyMapper[event.keyCode];
+    if (buttonName) {
+        this._currentState[buttonName] = false;
+        this.pollLatestAxis(buttonName)
+    }
+};
+
+Input.updateLatestAxis = function (buttonName) {
+    if (buttonName == 'left' || buttonName == 'right') {
+        this.latestHorizontal = buttonName
+    }
+    else if (buttonName == 'up' || buttonName == 'down') {
+        this.latestVertical = buttonName
+    }
+
+}
+
+Input.pollLatestAxis = function (buttonName) {
+    if (buttonName == 'left') {
+        this.latestHorizontal = this.isPressed('right') ? 'right' : null
+    } else if (buttonName == 'right') {
+        this.latestHorizontal = this.isPressed('left') ? 'left' : null
+    } else if (buttonName == 'up') {
+        this.latestVertical = this.isPressed('down') ? 'down' : null
+    } else if (buttonName == 'down') {
+        this.latestVertical = this.isPressed('up') ? 'up' : null
+    }
+
+}
+
+function Game_Runner() {
+    throw new Error('This is a static class')
+}
+
+Game_Runner.setController = function () {
+    this.controller = Game_Controller;
+    this.controller.createControlProfile()
+    this.controller.setControls()
+}
+
+Game_Runner.initialize = function(){
+    this.enemies = []
+    this.weapon = new machineGun()
+    this.setController()
+}
+
+Game_Runner.playerFire = function () {
+    this.weapon.fire();
+}
+
+
+
+Game_Runner.playerShotIsCollided = function () {
+    let scn = SceneManager._scene;
+    let list = scn._runner.enemies;
+    let length = list.length;
+    for (let i = 0; i < length; i++) {
+        if (standardPlayer.sp_Core.collision(this.target(), list[i].retrieve())) {
+            scn.removeChild(list[i].retrieve())
+            list[i].retrieve().anim.kill = true;
+            list[i].delete();
+            this.kill = true;
+            scn.removeChild(this.target())
+            list.splice(i, 1);
+            return true
+        }
+
+    }
+
+    return false
+}
+
+
+
+
+
+
+function Game_Controller(){
+    throw new Error('This is a static class')
+}
+
+Game_Controller.createControlProfile = function(){
+    Input.keyMapper["32"] = 'autofire'
+    //below object, ship game control name : Input.keymapper control name
+    this.controlProfile = {
+        'up':'up',
+        'down':'down',
+        'right':'right',
+        'left':'left',
+        'fire':'ok',
+        'autofire':'autofire',
+        'pause' : 'cancel'
+    }
+}
+
+Game_Controller.input = function(input){
+    return this.controlProfile[input]
+}
+
+
+
+
+Game_Controller.setControls = function(){
+    this.rightCb = ()=>{
+        let input = this.input('right')
+        if (Input.isPressed(input) && Input.latestHorizontal == input)
+            this.moveRight();
+    }
+    
+    this.leftCb = ()=>{
+        let input = this.input('left')
+        if (Input.isPressed(input) && Input.latestHorizontal == input)
+            this.moveLeft();
+    }
+    
+    this.upCb = ()=>{
+        let input = this.input('up')
+        if (Input.isPressed(input) && Input.latestVertical == input)
+            this.moveUp()
+    }
+    
+    this.downCb = ()=>{
+        let input = this.input('down')
+        if (Input.isPressed(input) && Input.latestVertical == input)
+            this.moveDown()
+    }
+    
+    this.fireCb = ()=>{
+        let input = this.input('fire')
+        if (Input.isTriggered(input))
+            Game_Runner.playerFire()
+    }
+
+    standardPlayer.sp_Core.addBaseUpdate(this.leftCb)
+    standardPlayer.sp_Core.addBaseUpdate(this.rightCb)
+    standardPlayer.sp_Core.addBaseUpdate(this.upCb)
+    standardPlayer.sp_Core.addBaseUpdate(this.downCb)
+    standardPlayer.sp_Core.addBaseUpdate(this.fireCb)
+}
+
+Game_Controller.moveUp = function () {
+    let player = Game_Runner.player.retrieve();
+
+    if (player.y > 0)
+        player.y -= 5
+
+}
+
+Game_Controller.moveDown = function () {
+    let player = Game_Runner.player.retrieve();
+
+    if (player.y < Graphics.height - player.height)
+        player.y += 5
+
+}
+
+Game_Controller.moveRight = function () {
+    let player = Game_Runner.player.retrieve();
+
+    if (player.x + 7 < Graphics.width - player.width)
+        player.x += 7
+
+    this.thrust = true
+}
+
+Game_Controller.moveLeft = function () {
+    let player = Game_Runner.player.retrieve();
+
+    if (player.x - 7 > 0)
+        player.x -= 7
+
 }

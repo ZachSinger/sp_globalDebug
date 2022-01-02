@@ -193,8 +193,8 @@ standardPlayer.sp_ImageCache.createTexture = function(url){
     return new PIXI.Texture.from(url)
 }
 
-standardPlayer.sp_ImageCache.createContainer = function(){
-    let container = new PIXI.Container;
+standardPlayer.sp_ImageCache.createContainer = function(particle, max, options, batchSize, autoResize){
+    let container = particle ? new PIXI.ParticleContainer(max, options, batchSize, autoResize) : new PIXI.Container;
     let id = `container:${this.generateUUID()}`
     let stub = new containerStub(id)
 
@@ -515,6 +515,14 @@ class containerStub extends cacheStub {
     delete(){
         standardPlayer.sp_ImageCache.deleteContainer(this)
     }
+
+    add(stub){
+        this.retrieve().addChild(stub.retrieve())
+    }
+
+    remove(stub){
+        this.retrieve().removeChild(stub.retrieve())
+    }
 }
 
 class graphicStub extends cacheStub {
@@ -562,15 +570,4 @@ class textStub extends cacheStub {
  }
 
 
- function testScene(){
-     this.initialize.apply(this, arguments)
- }
-
- testScene.prototype = Object.create(Scene_Base.prototype)
- testScene.prototype.constructor = testScene;
-
- testScene.prototype.initialize = function(){
-     this.preload(['pictures/Actor1_1'])
-     Scene_Base.prototype.initialize.call(this)
- }
 

@@ -6,9 +6,9 @@ shipMiniScene.prototype = Object.create(Scene_Base.prototype);
 shipMiniScene.prototype.constructor = shipMiniScene;
 
 shipMiniScene.prototype.initialize = function () {
-    let arr = Array.apply(null, Array(30)).map(() => { return 'pictures/enemyShip' });
+    let arr = []
     arr.push('pictures/playerShip');
-    arr.push('pictures/playerFire');
+    // arr.push('pictures/playerFire');
     this.preload(arr)
     Scene_Base.prototype.initialize.call(this)
     this._runner = Game_Runner;
@@ -16,11 +16,11 @@ shipMiniScene.prototype.initialize = function () {
 
 shipMiniScene.prototype.onPreloaded = function () {
     let stubs = this._loadedStubs;
-    let enemies = stubs.slice(0, 30)
-    let playerStub = stubs[30];
+    // let enemies = stubs.slice(0, 30)
+    let playerStub = stubs[0];
     let player = playerStub.retrieve()
 
-    this.addChild(player);
+    // this._runner.stage.add(playerStub);
     player.y = (Graphics.height / 2) - (player.height / 2)
     player.setGridData(3, 2)
     this._runner.player = playerStub;
@@ -338,9 +338,30 @@ Game_Runner.setMouseMode = function(useMouseMode){
     this._mouseOnlyMode = useMouseMode
 }
 
+Game_Runner.scn = function(){
+    return SceneManager._scene
+}
+
+Game_Runner.createContainers = function(){
+    this.createStage()
+    this.createStageElementsContainer()
+}
+
+Game_Runner.createStage = function(){
+    this.stage = standardPlayer.sp_ImageCache.createContainer();
+    this.scn().addChild(this.stage.retrieve())
+}
+
+Game_Runner.createStageElementsContainer = function(){
+    let options = {position:true}
+    this.stageElements = standardPlayer.sp_ImageCache.createContainer(true, 10, options)
+    this.stage.add(this.stageElements)
+}
+
 Game_Runner.initialize = function(){
     this.enemies = []
     this.weapon = new machineGun()
+    this.createContainers()
     this.setController()
 }
 

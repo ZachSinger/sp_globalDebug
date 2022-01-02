@@ -26,6 +26,9 @@ standardPlayer.sp_ImageCache.loadSharedSprite = function (url, cb, args) {
     let id = `sprite:${this.generateUUID()}`
     let stub = new spriteStub(id);
     let spr = new PIXI.Sprite.from(`img/${url}.png`);
+    
+    if(typeof cb == 'undefined')
+        cb = ()=>{};
 
     stub.setName(url)
     
@@ -234,6 +237,7 @@ standardPlayer.sp_ImageCache.textureInUse = function(stub){
                     return true
             }
         } else if(list[i].texture.baseTexture === baseTexture && list[i].texture !== texture){ 
+
             if(list[i].parent){
                 return true
             }
@@ -452,10 +456,10 @@ standardPlayer.sp_ImageCache.fleeceCallbacks = function(fleeceList){
     this.batchArgs = newArgs;
 
 }
-
 /* ===================================================================================================
         Stub classes
  ===================================================================================================*/
+
 
 
 class cacheStub {
@@ -569,3 +573,4 @@ class textStub extends cacheStub {
      this.preload(['pictures/Actor1_1'])
      Scene_Base.prototype.initialize.call(this)
  }
+

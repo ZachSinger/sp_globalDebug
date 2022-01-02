@@ -303,13 +303,10 @@ Game_Runner.playerShotIsCollided = function () {
             list.splice(i, 1);
             return true
         }
-
     }
 
     return false
 }
-
-
 
 
 
@@ -428,3 +425,4 @@ Game_Controller.moveLeft = function () {
         player.x -= 7
 
 }
+

@@ -689,10 +689,6 @@ class sp_Action {
 }
 
 
-
-
-
-
 /* ===================================================================================================
         Test Area
  ===================================================================================================*/
@@ -747,7 +743,56 @@ function testScript() {
 }
 
 
+function setShip(){
+    let cb = ()=>{
+        stub.retrieve().position.set(Graphics.width / 2, Graphics.height - stub.retrieve().height)
+    }
+    let stub = standardPlayer.sp_ImageCache.loadSprite('pictures/playerShip', cb)
 
+    SceneManager._scene.addChild(stub.retrieve())
 
+    return stub
+}
+
+function setListeners(target){
+    standardPlayer.sp_Core.allowPlayerMovement = false;
+    let tg = target.retrieve();
+
+    let updateFire = ()=>{
+        if(lastFire > 0){
+            lastFire--;
+        } 
+        
+    }
+    let leftCb = ()=>{
+        if(Input.isPressed('left')){
+            tg.x -= 12
+        }
+    }
+
+    
+    let rightCb = ()=>{
+        if(Input.isPressed('right')){
+            tg.x += 12
+        }
+    }
+
+    let okCb = ()=>{
+        if(Input.isPressed('ok')){
+            if(lastFire == 0){
+                console.log('firing')
+                pewpew(tg.x + tg.width / 2, tg.y)
+                lastFire = 5
+            }
+        }
+    }
+
+    standardPlayer.sp_Core.addBaseUpdate(leftCb)
+    standardPlayer.sp_Core.addBaseUpdate(rightCb)
+    standardPlayer.sp_Core.addBaseUpdate(okCb)
+    standardPlayer.sp_Core.addBaseUpdate(updateFire)
+}
+
+let lastFire = 0;
 
 

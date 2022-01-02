@@ -87,6 +87,8 @@ class shipWeapon {
     constructor(imageName) {
         this._imageName = imageName;
         this.stage = 0;
+        this.autoFireInterval = 20;
+        this.chargeTime = 30;
     }
 
     image() {
@@ -283,9 +285,11 @@ Game_Runner.initialize = function(){
     this.setController()
 }
 
-Game_Runner.playerFire = function () {
-    this.weapon.fire();
+Game_Runner.playerFire = function (chargeTime) {
+    this.weapon.fire(chargeTime);
 }
+
+
 
 
 
@@ -319,6 +323,7 @@ Game_Controller.createControlProfile = function(){
     Input.keyMapper["32"] = 'autofire'
 
     this._autoFirePressedTime = 0;
+    this._firePressedTime = 0;
     //below object, ship game control name : Input.keymapper control name
     this.controlProfile = {
         'up':'up',
@@ -365,8 +370,25 @@ Game_Controller.setControls = function(){
     
     this.fireCb = ()=>{
         let input = this.input('fire')
-        if (Input.isTriggered(input))
+        let chargeTime = Game_Runner.weapon.chargeTime;
+
+        if (Input.isTriggered(input)){
             Game_Runner.playerFire()
+        } else if(Input.isPressed(input)){
+            console.log('charging')
+            if(this._firePressedTime < chargeTime){
+              this._firePressedTime++
+            } 
+        } else if(this._firePressedTime){
+            console.log('releasing')
+            this.releaseCb()
+        }
+            
+    }
+
+    this.releaseCb = ()=>{
+        Game_Runner.playerFire(this._firePressedTime)
+        this._firePressedTime = 0;
     }
 
     this.autofireCb = ()=>{

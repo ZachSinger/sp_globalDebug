@@ -345,6 +345,8 @@ Game_Runner.scn = function(){
 Game_Runner.createContainers = function(){
     this.createStage()
     this.createStageElementsContainer()
+    this.createParticipantsContainer()
+    this.createPickupsContainer()
 }
 
 Game_Runner.createStage = function(){
@@ -354,8 +356,20 @@ Game_Runner.createStage = function(){
 
 Game_Runner.createStageElementsContainer = function(){
     let options = {position:true}
-    this.stageElements = standardPlayer.sp_ImageCache.createContainer(true, 10, options)
-    this.stage.add(this.stageElements)
+    this.stageElementsContainer = standardPlayer.sp_ImageCache.createContainer(true, 10, options)
+    this.stage.add(this.stageElementsContainer)
+}
+
+Game_Runner.createParticipantsContainer = function(){
+    let options = {position:true, tint:true, rotation:true, vertices:true}
+    this.participantsContainer = standardPlayer.sp_ImageCache.createContainer(true, 100, options)
+    this.stage.add(this.participantsContainer)
+}
+
+Game_Runner.createPickupsContainer = function(){
+    let options = {position:true, tint:true, rotation:false, vertices:false}
+    this.pickupsContainer = standardPlayer.sp_ImageCache.createContainer(true, 5, options)
+    this.stage.add(this.pickupsContainer)
 }
 
 Game_Runner.initialize = function(){

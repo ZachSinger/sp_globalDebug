@@ -97,6 +97,7 @@ class shipWeapon {
 class machineGun extends shipWeapon {
     constructor() {
         super(['pictures/playerFire', 'pictures/playerFire2'])
+        this.autoFireInterval = 20;
     }
 
     fire() {
@@ -319,6 +320,8 @@ function Game_Controller(){
 
 Game_Controller.createControlProfile = function(){
     Input.keyMapper["32"] = 'autofire'
+
+    this._autoFirePressedTime = 0;
     //below object, ship game control name : Input.keymapper control name
     this.controlProfile = {
         'up':'up',
@@ -369,11 +372,28 @@ Game_Controller.setControls = function(){
             Game_Runner.playerFire()
     }
 
+    this.autofireCb = ()=>{
+        let input = this.input('autofire')
+        let interval = Game_Runner.weapon.autoFireInterval;
+
+        if(Input.isPressed(input)){
+            if(this._autoFirePressedTime < interval){
+                this._autoFirePressedTime++
+            } else {
+                this._autoFirePressedTime = 0
+                Game_Runner.playerFire()
+            }
+        } else {
+            this._autoFirePressedTime = 20
+        }
+    }
+
     standardPlayer.sp_Core.addBaseUpdate(this.leftCb)
     standardPlayer.sp_Core.addBaseUpdate(this.rightCb)
     standardPlayer.sp_Core.addBaseUpdate(this.upCb)
     standardPlayer.sp_Core.addBaseUpdate(this.downCb)
     standardPlayer.sp_Core.addBaseUpdate(this.fireCb)
+    standardPlayer.sp_Core.addBaseUpdate(this.autofireCb)
 }
 
 Game_Controller.moveUp = function () {

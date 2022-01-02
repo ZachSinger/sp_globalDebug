@@ -143,7 +143,6 @@ class spAnimation {
     }
 
     extractInitialProps() {
-        console.log(this.target())
         let target = this.target();
         let props = {
             'x': target.x,

@@ -7,16 +7,16 @@ standardPlayer.sp_Core = standardPlayer.sp_Core || {};
 standardPlayer.sp_Core.Parameters = PluginManager.parameters('standardPlayer.sp_Core');
 
 
-/* ===================================================================================================
-        Update Handlers
- ===================================================================================================*/
+// /* ===================================================================================================
+//         Update Handlers
+//  ===================================================================================================*/
 standardPlayer.sp_Core.updateContainer = {
     _sceneBaseUpdatesPre: [],
     _sceneMenuUpdatesPre: [],
     _sceneMapUpdatesPre: [],
     _sceneBaseUpdatesPost: [],
     _sceneMenuUpdatesPost: [],
-    _sceneMapUpdatesPost: []
+    _sceneMapUpdatesPost: [],
 }
 
 standardPlayer.sp_Core._aliasSceneBase = Scene_Base.prototype.update;
@@ -131,6 +131,38 @@ Scene_MenuBase.prototype.update = function () {
 }
 
 
+/* ===================================================================================================
+        DataManager
+ ===================================================================================================*/
+
+standardPlayer.sp_Core._aliasDataManagerLoad = DataManager.loadDatabase;
+standardPlayer.sp_Core._aliasDatamanagerMakeSaveContents = DataManager.makeSaveContents;
+standardPlayer.sp_Core._databaseLoadFiles = [];
+standardPlayer.sp_Core._databaseSaveFiles = [];
+
+
+
+DataManager.loadDatabase = function () {
+    let databaseFiles = this._databaseFiles;
+    let addedFiles = standardPlayer.sp_Core._databaseLoadFiles;
+
+    this._databaseFiles = addedFiles.length ? databaseFiles.concat(addedFiles) : databaseFiles;
+    standardPlayer.sp_Core._aliasDataManagerLoad.call(this)
+}
+
+DataManager.makeSaveContents = function(){
+    let contents = standardPlayer.sp_Core._aliasDatamanagerMakeSaveContents();
+    return Object.assign({}, contents, standardPlayer.sp_Core._databaseSaveFiles)
+}
+
+standardPlayer.sp_Core.addDatabaseFile = function(objName, src, save){
+    let obj = {name:objName, src:src};
+    this._databaseLoadFiles.push(obj)
+
+    if(save)
+        this._databaseSaveFiles.push(obj)
+}
+
 
 /* ===================================================================================================
         Movement Handlers
@@ -221,12 +253,12 @@ standardPlayer.sp_Core.toggleKeys = function (vals, enable) {
     vals.forEach(item => this.toggleAction(item, enable));
 }
 
-standardPlayer.sp_Core.reassignKey = function(keyToReplace, replacement){
+standardPlayer.sp_Core.reassignKey = function (keyToReplace, replacement) {
     let keys = Object.keys(Input.keyMapper)
     let length = keys.length;
 
-    for(let i = 0; i < length; i++){
-        if(Input.keyMapper[keys[i]] == keyToReplace)
+    for (let i = 0; i < length; i++) {
+        if (Input.keyMapper[keys[i]] == keyToReplace)
             Input.keyMapper[keys[i]] = replacement
     }
 }
@@ -245,8 +277,8 @@ standardPlayer.sp_Core.getCharacterFromSpriteset = function (character) {
 
     for (sprite of spriteset) {
         if (sprite._character == character)
-            character.sprite = sprite;
-            
+            character.sprite = ()=>{return sprite};
+
     }
 }
 
@@ -265,47 +297,47 @@ Scene_Map.prototype.start = function () {
     standardPlayer.sp_Core._aliasMapStart.call(this)
 }
 
-Game_CharacterBase.prototype.setRow = function(row){
+Game_CharacterBase.prototype.setRow = function (row) {
     let sprite = this.sprite;
     let singleHeight = sprite.height;
     let singleWidth = sprite.width;
 
-    if(!this.gridData)
-        this.gridData = {row:0, col:0, rowMax:3, colMax:2}
+    if (!this.gridData)
+        this.gridData = { row: 0, col: 0, rowMax: 3, colMax: 2 }
     console.log(Math.min(row, this.gridData.rowMax))
-    row = Math.max(Math.min(row, this.gridData.rowMax), 0);    
+    row = Math.max(Math.min(row, this.gridData.rowMax), 0);
     this.gridData.row = row;
 
     sprite.texture.frame = new Rectangle(sprite.texture.frame.x, singleHeight * row, singleWidth, singleHeight)
 }
 
-Game_CharacterBase.prototype.setCol = function(col){
+Game_CharacterBase.prototype.setCol = function (col) {
     let sprite = this.sprite;
     let singleHeight = sprite.height;
     let singleWidth = sprite.width;
 
-    if(!this.gridData)
-        this.gridData = {row:0, col:0, rowMax:3, colMax:2}
+    if (!this.gridData)
+        this.gridData = { row: 0, col: 0, rowMax: 3, colMax: 2 }
     console.log(Math.min(col, this.gridData.colMax))
-    col = Math.max(Math.min(col, this.gridData.colMax), 0);    
+    col = Math.max(Math.min(col, this.gridData.colMax), 0);
     this.gridData.col = col;
 
-    sprite.texture.frame = new Rectangle( singleWidth * col, sprite.texture.frame.y, singleWidth, singleHeight)
+    sprite.texture.frame = new Rectangle(singleWidth * col, sprite.texture.frame.y, singleWidth, singleHeight)
 }
 
-Game_CharacterBase.prototype.setRowCol = function(row, col){
+Game_CharacterBase.prototype.setRowCol = function (row, col) {
     this.setRow(row);
     this.setCol(col);
 }
 
-Game_CharacterBase.prototype.setGridData = function(rows, cols){
+Game_CharacterBase.prototype.setGridData = function (rows, cols) {
     let sprite = this.sprite;
 
-    if(!this.gridData)
-        this.gridData = {row:0, col:0, rowMax:rows - 1, colMax:cols - 1}
+    if (!this.gridData)
+        this.gridData = { row: 0, col: 0, rowMax: rows - 1, colMax: cols - 1 }
 
     sprite.texture.frame = new Rectangle(0, 0, sprite.texture.baseTexture.width / cols, sprite.texture.baseTexture.height / rows)
-        return this;
+    return this;
 }
 
 
@@ -345,9 +377,9 @@ standardPlayer.sp_Core.retrieveFromList = function (list, condition) {
     return false;
 }
 
-standardPlayer.sp_Core.collision = function(spriteA, spriteB) {
-    if(!spriteB)
-    spriteB = {x:TouchInput.x, y:TouchInput.y, width:1, height:1}
+standardPlayer.sp_Core.collision = function (spriteA, spriteB) {
+    if (!spriteB)
+        spriteB = { x: TouchInput.x, y: TouchInput.y, width: 1, height: 1 }
     return !(
         ((spriteA.y + spriteA.height) < (spriteB.y)) ||
         (spriteA.y > (spriteB.y + spriteB.height)) ||
@@ -356,16 +388,16 @@ standardPlayer.sp_Core.collision = function(spriteA, spriteB) {
     );
 }
 
-standardPlayer.sp_Core.rndBetween = function(min, max, includingMax) {
+standardPlayer.sp_Core.rndBetween = function (min, max, includingMax) {
     max = includingMax ? max + 1 : max;
-  return Math.floor(Math.random() * (max - min) ) + min;
+    return Math.floor(Math.random() * (max - min)) + min;
 }
 
-standardPlayer.sp_Core.angle = function(cx, cy, ex, ey) {
+standardPlayer.sp_Core.angle = function (cx, cy, ex, ey) {
     let dy = 0;
     let dx = 0;
 
-    if(arguments.length < 3){
+    if (arguments.length < 3) {
         dy = cy.y - cx.y;
         dx = cy.x - cx.x;
     } else {
@@ -377,35 +409,35 @@ standardPlayer.sp_Core.angle = function(cx, cy, ex, ey) {
     theta *= 180 / Math.PI; //to degrees
     //if (theta < 0) theta = 360 + theta; // range [0, 360)
     return theta;
-  }
+}
 
 
-  standardPlayer.sp_Core.moveByAngle = function(obj, spd){
+standardPlayer.sp_Core.moveByAngle = function (obj, spd) {
     let angle = obj.rotation
     let dx = Math.cos(angle) * spd;
     let dy = Math.sin(angle) * spd;
 
     obj.x += dx;
     obj.y += dy;
-  }
+}
 
-  //Convert Graphics Object to Sprite
-  standardPlayer.sp_Core.GraphToSprite = function(g){
+//Convert Graphics Object to Sprite
+standardPlayer.sp_Core.GraphToSprite = function (g) {
     let t = new PIXI.Texture(this.GraphToTexture(g))
 
     return new PIXI.Sprite(t)
 }
 
 //convert Bitmap to Sprite * uses function base64ArrayBuffer, credit and license listed below
-standardPlayer.sp_Core.BmpToSprite = function(b){
+standardPlayer.sp_Core.BmpToSprite = function (b) {
     let t = new PIXI.Texture.from(b.__canvas)
 
     return new PIXI.Sprite(t)
 }
 
 //Convert Graphics Object to Texture
-standardPlayer.sp_Core.GraphToTexture = function(g){
+standardPlayer.sp_Core.GraphToTexture = function (g) {
     let r = Graphics.app.renderer;
-    
+
     return r.generateTexture(g)
 }

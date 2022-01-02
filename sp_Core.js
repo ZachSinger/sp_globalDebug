@@ -276,8 +276,9 @@ standardPlayer.sp_Core.getCharacterFromSpriteset = function (character) {
     let spriteset = this.getCharactersSpriteset();
 
     for (sprite of spriteset) {
-        if (sprite._character == character)
-            character.sprite = ()=>{return sprite};
+        if (sprite._character == character){
+            return sprite
+        }
 
     }
 }
@@ -288,17 +289,12 @@ standardPlayer.sp_Core.setSpriteReferences = function () {
     evs.forEach(ev => standardPlayer.sp_Core.getCharacterFromSpriteset(ev))
 }
 
-
-standardPlayer.sp_Core._aliasMapStart = Scene_Map.prototype.start;
-Scene_Map.prototype.start = function () {
-    standardPlayer.sp_Core.setSpriteReferences();
-    standardPlayer.sp_Core.getCharacterFromSpriteset($gamePlayer)
-
-    standardPlayer.sp_Core._aliasMapStart.call(this)
+Game_CharacterBase.prototype.sprite = function(){
+    return standardPlayer.sp_Core.getCharacterFromSpriteset(this)
 }
 
 Game_CharacterBase.prototype.setRow = function (row) {
-    let sprite = this.sprite;
+    let sprite = this.sprite();
     let singleHeight = sprite.height;
     let singleWidth = sprite.width;
 
@@ -312,7 +308,7 @@ Game_CharacterBase.prototype.setRow = function (row) {
 }
 
 Game_CharacterBase.prototype.setCol = function (col) {
-    let sprite = this.sprite;
+    let sprite = this.sprite();
     let singleHeight = sprite.height;
     let singleWidth = sprite.width;
 
@@ -331,7 +327,7 @@ Game_CharacterBase.prototype.setRowCol = function (row, col) {
 }
 
 Game_CharacterBase.prototype.setGridData = function (rows, cols) {
-    let sprite = this.sprite;
+    let sprite = this.sprite();
 
     if (!this.gridData)
         this.gridData = { row: 0, col: 0, rowMax: rows - 1, colMax: cols - 1 }

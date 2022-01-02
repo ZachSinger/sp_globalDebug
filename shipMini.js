@@ -269,14 +269,73 @@ Input.pollLatestAxis = function (buttonName) {
 
 }
 
+TouchInput._onLeftButtonDown = function(event) {
+    const x = Graphics.pageToCanvasX(event.pageX);
+    const y = Graphics.pageToCanvasY(event.pageY);
+    if (Graphics.isInsideCanvas(x, y)) {
+        this._mousePressed = true;
+        this._pressedTime = 0;
+        this._onTrigger(x, y);
+    }
+    Game_Controller.leftPressed = true;
+};
+
+
+TouchInput._onRightButtonDown = function(event) {
+    const x = Graphics.pageToCanvasX(event.pageX);
+    const y = Graphics.pageToCanvasY(event.pageY);
+    if (Graphics.isInsideCanvas(x, y)) {
+        this._onCancel(x, y);
+    }
+
+    Game_Controller._charging = true;
+    Game_Controller.rightPressed = true;
+};
+
+
+TouchInput._onMouseUp = function(event) {
+    if (event.button === 0) {
+        const x = Graphics.pageToCanvasX(event.pageX);
+        const y = Graphics.pageToCanvasY(event.pageY);
+        this._mousePressed = false;
+        this._onRelease(x, y);
+    } else if (event.button === 1){
+        Game_Controller.leftPressed = false;
+    } else if (event.button === 2){
+        Game_Controller._charging = false;
+        Game_Controller.rightPressed = false;
+    }
+};
+
+TouchInput._onMouseMove = function(event) {
+    const x = Graphics.pageToCanvasX(event.pageX);
+    const y = Graphics.pageToCanvasY(event.pageY);
+    if (this._mousePressed) {
+        this._onMove(x, y);
+    } else if (Graphics.isInsideCanvas(x, y)) {
+        this._onHover(x, y);
+    }
+};
+
+
+
+
+
+
 function Game_Runner() {
     throw new Error('This is a static class')
 }
 
 Game_Runner.setController = function () {
+    this._mouseOnlyMode = false;
+    this.playerSpeed = 15
     this.controller = Game_Controller;
     this.controller.createControlProfile()
     this.controller.setControls()
+}
+
+Game_Runner.setMouseMode = function(useMouseMode){
+    this._mouseOnlyMode = useMouseMode
 }
 
 Game_Runner.initialize = function(){
@@ -320,7 +379,8 @@ function Game_Controller(){
 }
 
 Game_Controller.createControlProfile = function(){
-    Input.keyMapper["32"] = 'autofire'
+    Input.keyMapper["32"] = 'autofire'; //space bar
+    Input.keyMapper["67"] = 'smartbomb' //c button
 
     this._autoFirePressedTime = 0;
     this._firePressedTime = 0;
@@ -331,6 +391,7 @@ Game_Controller.createControlProfile = function(){
         'right':'right',
         'left':'left',
         'fire':'ok',
+        'smartbomb': 'smartbomb',
         'autofire':'autofire',
         'pause' : 'cancel'
     }
@@ -371,15 +432,20 @@ Game_Controller.setControls = function(){
     this.fireCb = ()=>{
         let input = this.input('fire')
         let chargeTime = Game_Runner.weapon.chargeTime;
+        let autofire = this.input('autofire')
 
-        if (Input.isTriggered(input)){
+        if (Input.isTriggered(input) || TouchInput.isCancelled()){
             Game_Runner.playerFire()
-        } else if(Input.isPressed(input)){
+        } else if(Input.isPressed(input) || Game_Controller._charging){
             console.log('charging')
             if(this._firePressedTime < chargeTime){
               this._firePressedTime++
             } 
-        } else if(this._firePressedTime){
+
+            if(TouchInput.isTriggered() || Input.isTriggered(autofire)){
+                console.log('triggering smart bomb')
+            }
+        } else if(this._firePressedTime == chargeTime){
             console.log('releasing')
             this.releaseCb()
         }
@@ -395,7 +461,9 @@ Game_Controller.setControls = function(){
         let input = this.input('autofire')
         let interval = Game_Runner.weapon.autoFireInterval;
 
-        if(Input.isPressed(input)){
+        if(Game_Controller._charging)   
+            return
+        if(Input.isPressed(input) || TouchInput.isPressed()){
             if(this._autoFirePressedTime < interval){
                 this._autoFirePressedTime++
             } else {
@@ -405,7 +473,27 @@ Game_Controller.setControls = function(){
         } else {
             this._autoFirePressedTime = 20
         }
+
     }
+
+    this.mouseMoveCb = ()=>{
+        if(!Game_Runner._mouseOnlyMode)
+            return
+
+        let player = Game_Runner.player.retrieve();
+        let speed = Game_Runner.playerSpeed
+        let tX = TouchInput._x;
+        let tY = TouchInput._y;
+        let pX = player.x + player.width * .5;
+        let pY = player.y + player.height * .5;
+        let distX = Math.abs(tX - pX) > speed ? tX - pX > 0 ? speed : -speed : tX - pX
+        let distY = Math.abs(tY - pY) > speed ? tY - pY > 0 ? speed : -speed : tY - pY
+        
+        console.log(distX, distY)
+        player.x += distX;
+        player.y += distY;
+    }
+    
 
     standardPlayer.sp_Core.addBaseUpdate(this.leftCb)
     standardPlayer.sp_Core.addBaseUpdate(this.rightCb)
@@ -413,6 +501,7 @@ Game_Controller.setControls = function(){
     standardPlayer.sp_Core.addBaseUpdate(this.downCb)
     standardPlayer.sp_Core.addBaseUpdate(this.fireCb)
     standardPlayer.sp_Core.addBaseUpdate(this.autofireCb)
+    standardPlayer.sp_Core.addBaseUpdate(this.mouseMoveCb)
 }
 
 Game_Controller.moveUp = function () {

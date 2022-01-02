@@ -307,6 +307,16 @@ TouchInput._onMouseUp = function(event) {
     }
 };
 
+TouchInput._onMouseMove = function(event) {
+    const x = Graphics.pageToCanvasX(event.pageX);
+    const y = Graphics.pageToCanvasY(event.pageY);
+    if (this._mousePressed) {
+        this._onMove(x, y);
+    } else if (Graphics.isInsideCanvas(x, y)) {
+        this._onHover(x, y);
+    }
+};
+
 
 
 
@@ -317,9 +327,15 @@ function Game_Runner() {
 }
 
 Game_Runner.setController = function () {
+    this._mouseOnlyMode = false;
+    this.playerSpeed = 15
     this.controller = Game_Controller;
     this.controller.createControlProfile()
     this.controller.setControls()
+}
+
+Game_Runner.setMouseMode = function(useMouseMode){
+    this._mouseOnlyMode = useMouseMode
 }
 
 Game_Runner.initialize = function(){
@@ -457,8 +473,26 @@ Game_Controller.setControls = function(){
         } else {
             this._autoFirePressedTime = 20
         }
+
     }
 
+    this.mouseMoveCb = ()=>{
+        if(!Game_Runner._mouseOnlyMode)
+            return
+
+        let player = Game_Runner.player.retrieve();
+        let speed = Game_Runner.playerSpeed
+        let tX = TouchInput._x;
+        let tY = TouchInput._y;
+        let pX = player.x + player.width * .5;
+        let pY = player.y + player.height * .5;
+        let distX = Math.abs(tX - pX) > speed ? tX - pX > 0 ? speed : -speed : tX - pX
+        let distY = Math.abs(tY - pY) > speed ? tY - pY > 0 ? speed : -speed : tY - pY
+        
+        console.log(distX, distY)
+        player.x += distX;
+        player.y += distY;
+    }
     
 
     standardPlayer.sp_Core.addBaseUpdate(this.leftCb)
@@ -467,6 +501,7 @@ Game_Controller.setControls = function(){
     standardPlayer.sp_Core.addBaseUpdate(this.downCb)
     standardPlayer.sp_Core.addBaseUpdate(this.fireCb)
     standardPlayer.sp_Core.addBaseUpdate(this.autofireCb)
+    standardPlayer.sp_Core.addBaseUpdate(this.mouseMoveCb)
 }
 
 Game_Controller.moveUp = function () {

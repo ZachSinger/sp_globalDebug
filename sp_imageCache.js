@@ -30,9 +30,20 @@ standardPlayer.sp_ImageCache.loadSharedSprite = function (url, cb, args) {
     if(typeof cb == 'undefined')
         cb = ()=>{};
 
+    stub.setName(url)
+    
+    if(typeof cb == 'undefined')
+        cb = ()=>{};
+
     spr.sp_image_cacheId = id;
     spr.onCacheLoad = cb
     spr.onCacheArgs = args;
+    spr.sp_image_cache_stub = stub
+    spr.setRow = this.setRow.bind(spr)
+    spr.setCol = this.setCol.bind(spr)
+    spr.setRowCol = this.setRowCol.bind(spr)
+    spr.setGridData = this.setGridData.bind(spr)
+    spr.isShared = true;
     this.sprites.push(spr)
     this.active = true
 
@@ -44,11 +55,43 @@ standardPlayer.sp_ImageCache.loadSprite = function(url, cb, args){
     let stub = new spriteStub(id);
     let spr = new PIXI.Sprite.from(this.createTexture(`img/${url}.png`));
 
+    stub.setName(url)
+
     if(typeof cb == 'undefined')
         cb = ()=>{};
 
     spr.sp_image_cacheId = id;
     spr.onCacheLoad = cb;
+    spr.onCacheArgs = args;
+    spr.sp_image_cache_stub = stub
+    spr.setRow = this.setRow.bind(spr)
+    spr.setCol = this.setCol.bind(spr)
+    spr.setRowCol = this.setRowCol.bind(spr)
+    spr.setGridData = this.setGridData.bind(spr)
+    this.sprites.push(spr)
+    this.active = true
+
+    return stub;
+}
+
+standardPlayer.sp_ImageCache.loadTilingSprite = function(url, cb, args){
+    let id = `sprite:${this.generateUUID()}`
+    let stub = new tilingSpriteStub(id);
+    let txt = this.createTexture(`img/${url}.png`);
+    let spr = new PIXI.TilingSprite(txt);
+    let aliasCB = ()=>{
+        spr.width = txt.baseTexture.width;
+        spr.height = txt.baseTexture.height;
+        cb.call(spr);
+    }
+
+    stub.setName(url)
+
+    if(typeof cb == 'undefined')
+        cb = ()=>{};
+
+    spr.sp_image_cacheId = id;
+    spr.onCacheLoad = aliasCB;
     spr.onCacheArgs = args;
     this.sprites.push(spr)
     this.active = true
@@ -74,6 +117,47 @@ standardPlayer.sp_ImageCache.loadBatch = function(name, list, cb, args){
     return stubs;
 }
 
+standardPlayer.sp_ImageCache.setRow = function(row){
+    let sprite = this;
+    let singleHeight = sprite.height;
+    let singleWidth = sprite.width;
+
+    if(!this.gridData)
+        this.gridData = {row:0, col:0, rowMax:3, colMax:2}
+    row = Math.max(Math.min(row, this.gridData.rowMax), 0);    
+    this.gridData.row = row;
+
+    sprite.texture.frame = new Rectangle(sprite.texture.frame.x, singleHeight * row, singleWidth, singleHeight)
+}
+
+standardPlayer.sp_ImageCache.setCol = function(col){
+    let sprite = this;
+    let singleHeight = sprite.height;
+    let singleWidth = sprite.width;
+
+    if(!this.gridData)
+        this.gridData = {row:0, col:0, rowMax:3, colMax:2}
+    col = Math.max(Math.min(col, this.gridData.colMax), 0);    
+    this.gridData.col = col;
+
+    sprite.texture.frame = new Rectangle( singleWidth * col, sprite.texture.frame.y, singleWidth, singleHeight)
+}
+
+standardPlayer.sp_ImageCache.setRowCol = function(row, col){
+    this.setRow(row);
+    this.setCol(col);
+}
+
+standardPlayer.sp_ImageCache.setGridData = function(rows, cols){
+    let sprite = this;
+
+    if(!this.gridData)
+        this.gridData = {row:0, col:0, rowMax:rows - 1, colMax:cols - 1}
+
+    sprite.texture.frame = new Rectangle(0, 0, sprite.texture.baseTexture.width / cols, sprite.texture.baseTexture.height / rows)
+        return this;
+}
+
 standardPlayer.sp_ImageCache.loadSharedBatch = function(name, list, cb, args){
     let length = list.length;
     let stubs = [];
@@ -92,8 +176,18 @@ standardPlayer.sp_ImageCache.loadSharedBatch = function(name, list, cb, args){
     return stubs;
 }
 
+standardPlayer.sp_ImageCache.loadNSprites = function(name, url, qty, cb, args){
+    let arr = Array.apply(null, Array(qty)).map(()=>{return url})
+    return this.loadBatch(name, arr, cb, args);
+}
+
+standardPlayer.sp_ImageCache.loadNSharedSprites = function(name, url, qty, cb, args){
+    let arr = Array.apply(null, Array(qty)).map(()=>{return url})
+    return this.loadSharedBatch(name, arr, cb, args);
+}
+
 standardPlayer.sp_ImageCache.createTexture = function(url){
-    if(typeof PIXI.utils.TextureCache[url] != 'undefined'){
+    if(typeof PIXI.utils.TextureCache[url] != 'undefined'){ //If the texture exists
         return new PIXI.Texture(PIXI.utils.TextureCache[url])
     }
     return new PIXI.Texture.from(url)
@@ -133,11 +227,17 @@ standardPlayer.sp_ImageCache.createText = function(content){
 standardPlayer.sp_ImageCache.textureInUse = function(stub){
     let texture = stub.retrieve().texture;
     let baseTexture = texture.baseTexture;
+    let shared = stub.retrieve().isShared;
     let list = this.sprites;
     let length = list.length;
 
     for(let i = 0; i < length; i++){
-        if(list[i].texture.baseTexture === baseTexture && list[i].texture !== texture){ 
+        if(shared){
+            if(list[i].texture.baseTexture === baseTexture && list[i].sp_image_cache_stub.sp_image_cacheId !== stub.sp_image_cacheId){
+                    return true
+            }
+        } else if(list[i].texture.baseTexture === baseTexture && list[i].texture !== texture){ 
+
             if(list[i].parent){
                 return true
             }
@@ -155,9 +255,8 @@ standardPlayer.sp_ImageCache.deleteSprite = function(stub){
 
     for(let i = 0; i < length; i++){
         if(list[i].sp_image_cacheId == stub.sp_image_cacheId){
-            console.log(this.textureInUse(stub)) 
             list[i].destroy(!this.textureInUse(stub)) 
-            list[i] = undefined
+            list[i] = undefined    
         } else {
             newList.push(list[i])
         }
@@ -196,7 +295,6 @@ standardPlayer.sp_ImageCache.deleteContainer = function(stub){
 
     for(let i = 0; i < length; i++){
         if(list[i].sp_image_cacheId == stub.sp_image_cacheId){
-            console.log('found container')
             this.destroyContainerChildren(list[i]);
             list[i].destroy(true) 
             list[i] = undefined
@@ -204,7 +302,6 @@ standardPlayer.sp_ImageCache.deleteContainer = function(stub){
             newList.push(list[i])
         }
     }
-    console.log(newList)
     this.containers = newList;
 }
 
@@ -277,7 +374,6 @@ standardPlayer.sp_ImageCache.generateUUID = function(){
 }
 
 standardPlayer.sp_ImageCache.run = function(){
-    console.log('image cache running')
     this.isReady();
     if(this.isLoaded)
         this.active = false;
@@ -301,7 +397,7 @@ standardPlayer.sp_ImageCache.allSpritesLoaded = function(){
             if(current.sp_image_cache_batch){
                     batches[current.sp_image_cache_batch] = true;
                 }
-            if(current.texture.baseTexture.valid){
+            if(current.texture && current.texture.baseTexture && current.texture.baseTexture.valid){
                 current.sp_image_loaded = true;
                 current.onCacheLoad(current.onCacheArgs);
             } else {
@@ -360,6 +456,10 @@ standardPlayer.sp_ImageCache.fleeceCallbacks = function(fleeceList){
     this.batchArgs = newArgs;
 
 }
+/* ===================================================================================================
+        Stub classes
+ ===================================================================================================*/
+
 
 
 class cacheStub {
@@ -372,15 +472,37 @@ class cacheStub {
         return standardPlayer.sp_ImageCache.retrieveEntity(this.sp_image_cacheId)
     }
 
+    setName(name){
+        this._name = name
+    }
+
+    name(){
+        return this._name
+    }
+
 }
 
 
 class spriteStub extends cacheStub {
     constructor(id){
         super(id)
+        this._name = "";
     }
 
     delete(){
+        standardPlayer.sp_ImageCache.deleteSprite(this)
+    }
+
+    
+}
+
+class tilingSpriteStub extends cacheStub {
+    constructor(id){
+        super(id)
+        this._name = "";
+    }
+
+    delte(){
         standardPlayer.sp_ImageCache.deleteSprite(this)
     }
 }
@@ -414,3 +536,41 @@ class textStub extends cacheStub {
         standardPlayer.sp_ImageCache.deleteText(this)
     }
 }
+
+/* ===================================================================================================
+        Scene and Window classes
+ ===================================================================================================*/
+
+ standardPlayer.sp_ImageCache.alias_SceneBase_Start = Scene_Base.prototype.start;
+ standardPlayer.sp_ImageCache.alias_WindowBase_Start = Window_Base.prototype.start;
+
+ Scene_Base.prototype.preload = function(images){
+    this._loadedStubs = standardPlayer.sp_ImageCache.loadBatch("preloader", images, ()=>{this.onPreloaded()})
+ }
+
+ Scene_Base.prototype.onPreloaded = function(){
+    this._isPreloaded = true;
+ }
+
+
+ Window_Base.prototype.preload = function(images){
+    this._loadedStubs = standardPlayer.sp_ImageCache.loadBatch("preloader", images, ()=>{this.onPreloaded()})
+ }
+
+ Window_Base.prototype.onPreloaded = function(){
+    return true;
+ }
+
+
+ function testScene(){
+     this.initialize.apply(this, arguments)
+ }
+
+ testScene.prototype = Object.create(Scene_Base.prototype)
+ testScene.prototype.constructor = testScene;
+
+ testScene.prototype.initialize = function(){
+     this.preload(['pictures/Actor1_1'])
+     Scene_Base.prototype.initialize.call(this)
+ }
+

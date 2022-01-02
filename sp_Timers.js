@@ -81,6 +81,10 @@ class sp_Timer{
         return this;
     }
 
+    setTarget(targetTime){
+        this.target = targetTime;
+    }
+
     togglePause(value){
         this.pause = value || !this.pause;
     }

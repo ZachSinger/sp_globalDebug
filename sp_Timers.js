@@ -1,3 +1,12 @@
+/*:
+* @plugindesc standardPlayer scripting timer addon
+* @author standardplayer
+* @target MZ
+* @base sp_Core
+* @orderAfter sp_Core
+*/
+
+
 var Imported = Imported || {};
 Imported.sp_Timers = 'sp_Timers';
 

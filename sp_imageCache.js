@@ -1,3 +1,12 @@
+/*:
+* @plugindesc standardPlayer PIXI imageCache
+* @author standardplayer
+* @target MZ
+* @base sp_Core
+* @orderAfter sp_Core
+*/
+
+
 var Imported = Imported || {};
 Imported.sp_ImageCache = 'sp_ImageCache';
 

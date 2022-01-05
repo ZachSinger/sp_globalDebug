@@ -1,3 +1,379 @@
+
+
+/*~struct~Animations:
+ * @param name
+ * @type text
+ * 
+ * @param actions
+ * @type struct<AnimationAction>[]
+ *
+ */
+
+/*~struct~AnimationAction:
+ * @param name
+ * @type text
+ * @desc name of action
+ *
+ * @param steps
+ * @type struct<AnimationStep>[]
+ * @desc List of steps for this action
+ */
+
+/*~struct~AnimationStep:
+ * @param name
+ * @text Name
+ * @type text
+ * @default Animation Step
+ * @desc name of step
+ * 
+ * @param condition
+ * @type struct<Condition>[]
+ * @text Conditions
+ * @desc List of conditions that must pass for this step to run
+ * 
+ * @param dur
+ * @text Duration(frames)
+ * @type number
+ * @default 1
+ * @desc Length of time in frames for this step to complete
+ * 
+ * @param reset
+ * @text Reset
+ * @type boolean
+ * @default false
+ * @desc If true, will animate to original preanimation state over specified duration
+ *
+ * @param setMove
+ * @text Set Location
+ * @type boolean
+ * @default false
+ * 
+ * @param x
+ * @type number
+ * @parent setMove
+ * 
+ * @param y
+ * @type number
+ * @parent setMove
+ * 
+ * @param moveRelative
+ * @type boolean
+ * @parent setMove
+ * @default false
+ * 
+ * @param setScale
+ * @text Set Scale
+ * @type boolean
+ * @default false
+ * 
+ * @param scaleX
+ * @type number
+ * @decimals 2
+ * @parent setScale
+ * @default 1.00
+ * 
+ * @param scaleY
+ * @type number
+ * @decimals 2
+ * @parent setScale
+ * @default 1.00
+ * 
+ * @param setRotation
+ * @text Set Rotation
+ * @type boolean
+ * @default false
+ * 
+ * @param rotation
+ * @type number
+ * @desc values are in radians, PI * 2 is equal to one full rotation
+ * @decimals 3
+ * @parent setRotation
+ * 
+ * @param angle
+ * @type number
+ * @desc values are in degrees, 360 is equal to one full rotation
+ * @parent setRotation
+ * 
+ * @param setAlpha
+ * @text Set Alpha
+ * @type boolean
+ * @default false
+ * 
+ * @param alpha
+ * @type number
+ * @decimals 2
+ * @parent setAlpha
+ * @default 1
+ * 
+ * @param setDimensions
+ * @text Set Dimensions
+ * @type boolean
+ * @default false
+ * 
+ * @param width
+ * @type number
+ * @parent setDimensions
+ * 
+ * @param height
+ * @type number
+ * @parent setDimensions
+ */
+
+
+/*~struct~Condition:
+ * @param name
+ * @type text
+ * @text Name
+ * @desc can be used in debugging to determine what condition is passing or failing
+ * 
+ * @param ==variableSection
+ * @text =====Variables=====
+ * @default
+ * 
+ * @param gameVariableLeft
+ * @type variable
+ * @text Variable A
+ * @parent ==variableSection
+ * 
+ * @param gameVarComparator
+ * @text Comparator
+ * @type select
+ * @option equals
+ * @option >
+ * @option <
+ * @option >=
+ * @option <=
+ * @default equals
+ * @parent ==variableSection
+ * 
+ * @param gameVariableRight
+ * @type variable
+ * @text Variable B
+ * @parent ==variableSection
+ * 
+ * @param gameVariableExplicit
+ * @type number
+ * @text Value
+ * @parent ==variableSection
+ * 
+ * @param ==switchSection
+ * @text =====Game Switches=====
+ * @default
+ * 
+ * @param switch
+ * @type switch
+ * @text Switch
+ * @parent ==switchSection
+ * 
+ * @param switchValue
+ * @type boolean
+ * @text Is
+ * @parent ==switchSection
+ * @default true
+ *
+ * 
+ * @param ==itemSection
+ * @text =====Items=====
+ * @default
+ * 
+ * @param item
+ * @type item
+ * @text Item
+ * @parent ==itemSection
+ * 
+ * @param itemComparator
+ * @text Operation
+ * @type select
+ * @option in posession
+ * @option amount
+ * @parent ==itemSection
+ * 
+ * @param itemAmount
+ * @type number
+ * @min 0
+ * @text Amount
+ * @desc only applicable if 'amount' operation is selected
+ * @parent ==itemSection
+ * 
+ * 
+ * @param ==actorSection
+ * @text =====Actor=====
+ * @default
+ * 
+ * 
+ * @param actor
+ * @type actor
+ * @text Actor
+ * @parent ==actorSection
+ * 
+ * @param inParty
+ * @type boolean
+ * @text Is In Party
+ * @parent ==actorSection
+ * 
+ * @param hasClass
+ * @type class
+ * @text Has Class
+ * @parent ==actorSection
+ * 
+ * @param hasWeapon
+ * @type weapon
+ * @text Has Weapon
+ * @parent ==actorSection
+ * 
+ * @param hasArmor
+ * @type armor
+ * @text Has Armor
+ * @parent ==actorSection
+ * 
+ * @param hasSkill
+ * @type skill
+ * @text Has Skill
+ * @parent ==actorSection
+ * 
+ * @param hasState
+ * @type state
+ * @text Has State
+ * @parent ==actorSection
+ * 
+ * @param ==playerSection
+ * @text =====Player=====
+ * @default
+ * 
+ * @param playerX
+ * @text Player X
+ * @type number
+ * @default -1
+ * @parent ==playerSection
+ * 
+ * @param playerY
+ * @text Player Y
+ * @type number
+ * @default -1
+ * @parent ==playerSection
+ * 
+ * @param playerCanMove
+ * @text Can Move
+ * @type boolean
+ * @desc Evaluates event.canMove function
+ * @parent ==playerSection
+ * 
+ * @param ==eventSection
+ * @text =====Event=====
+ * @default
+ * 
+ * @param event
+ * @type number
+ * @text EventId
+ * @min 0
+ * @parent ==eventSection
+ * 
+ * @param eventX
+ * @text Event X
+ * @type number
+ * @parent ==eventSection
+ * 
+ * @param eventY
+ * @text Event Y
+ * @type number
+ * @parent ==eventSection
+ * 
+ * @param eventCanMove
+ * @text Can Move
+ * @type boolean
+ * @desc Evaluates event.canMove function
+ * @parent ==eventSection
+ * 
+ * @param selfSwitch
+ * @text Self Switch
+ * @type select
+ * @option none
+ * @option A
+ * @option B
+ * @option C
+ * @option D
+ * @parent ==eventSection
+ * 
+ * @param ==goldSection
+ * @text =====Gold=====
+ * @default
+ * 
+ * @param goldComparator
+ * @text Gold is 
+ * @type select
+ * @option equals
+ * @option >
+ * @option <
+ * @option >=
+ * @option <=
+ * @option mod
+ * @parent ==goldSection
+ * 
+ * 
+ * @param goldValue
+ * @type number
+ * @default 0
+ * @text Value
+ * @parent ==goldSection
+ * 
+ * @param weapon
+ * @type weapon
+ * @text Weapon in Posession:
+ * @default 0
+ * 
+ * 
+ * @param armor
+ * @type armor
+ * @text Armor in Posession:
+ * @default 0
+ * 
+ * @param ==enemySection
+ * @text =====Enemy=====
+ * @default
+ * 
+ * @param enemy
+ * @type enemy
+ * @text Enemy
+ * @parent ==enemySection
+ * 
+ * @param enemyHasAppeared
+ * @type boolean
+ * @text Has Appeared
+ * @parent ==enemySection
+ *
+ * @param enemyState
+ * @type state
+ * @text Has State
+ * @parent ==enemySection
+ * 
+ * @param vehicle
+ * @type vehicle
+ * @text Driving Vehicle: 
+ * 
+ */
+
+
+/*:
+ * @plugindesc shipMinigame
+ * @base sp_Core
+ * @orderAfter sp_Animations
+ *
+ * @param Animations
+ * @type struct<Animations>[]
+ * @desc List of all animations
+ *
+ *
+ * @help
+ * ===========================================
+ *             Desc
+ * ===========================================
+ *
+ *
+ * 
+ */
+
+// standardPlayer.sp_Core.addDatabaseFile('$shipWeapons', 'ShipWeapons.json')
+
 function shipMiniScene() {
     this.initialize.apply(this, arguments)
 }
@@ -6,9 +382,9 @@ shipMiniScene.prototype = Object.create(Scene_Base.prototype);
 shipMiniScene.prototype.constructor = shipMiniScene;
 
 shipMiniScene.prototype.initialize = function () {
-    let arr = Array.apply(null, Array(30)).map(() => { return 'pictures/enemyShip' });
+    let arr = []
     arr.push('pictures/playerShip');
-    arr.push('pictures/playerFire');
+    // arr.push('pictures/playerFire');
     this.preload(arr)
     Scene_Base.prototype.initialize.call(this)
     this._runner = Game_Runner;
@@ -16,11 +392,11 @@ shipMiniScene.prototype.initialize = function () {
 
 shipMiniScene.prototype.onPreloaded = function () {
     let stubs = this._loadedStubs;
-    let enemies = stubs.slice(0, 30)
-    let playerStub = stubs[30];
+    // let enemies = stubs.slice(0, 30)
+    let playerStub = stubs[0];
     let player = playerStub.retrieve()
 
-    this.addChild(player);
+    // this._runner.stage.add(playerStub);
     player.y = (Graphics.height / 2) - (player.height / 2)
     player.setGridData(3, 2)
     this._runner.player = playerStub;
@@ -80,6 +456,52 @@ shipMiniScene.prototype.enemyFire = function (enemy) {
     })
 }
 
+shipMiniScene.prototype.parseAnimation = function(animation){
+    let temp = standardPlayer.sp_Animations.createTemplate();
+    let list = animation.actions;
+    let length = list.length;
+
+    for(let i = 0; i < length; i++){
+        let action = temp.action(i)
+        for(let j = 0; j < list[i].steps.length; j++){
+            let step = list[i].steps[j];
+            let dur = step.dur;
+            let pad = 0;
+            if(step.setMove){
+                if(step.moveRelative){
+                    action = action.moveXYRel(step.x, step.y, dur, pad)
+                } else {
+                    action = action.moveXY(step.x, step.y, dur, pad)
+                }
+            }
+
+            if(step.setScale)
+                action = action.setScale(step.scaleX, step.scaleY, dur, pad)
+
+            if(step.setAlpha)
+                action = action.setAlpha(step.alpha, dur, pad)
+
+            if(step.setDimensions)
+                action = action.setDimensions(step.width, step.height, dur, pad)
+            
+            if(step.setRotation)
+                action = action.setRotation(step.rotation, dur, pad)
+
+            if(step.reset)
+                action = action.resetPosition(dur, pad)
+
+            if(j + 1 < list[i].steps.length){
+                console.log('running then')
+                action = action.then()
+            }
+            
+        }
+            
+    }
+
+    return temp
+}
+
 
 
 
@@ -98,7 +520,7 @@ class shipWeapon {
 
 class machineGun extends shipWeapon {
     constructor() {
-        super(['pictures/playerFire', 'pictures/playerFire2'])
+        super(['pictures/spreader', 'pictures/spreader'])
         this.autoFireInterval = 20;
     }
 
@@ -135,7 +557,7 @@ class machineGun extends shipWeapon {
 
 class spreader extends shipWeapon {
     constructor() {
-        super(['pictures/playerFire', 'pictures/playerFire2'])
+        super(['pictures/spreader', 'pictures/spreader'])
     }
 
     fire() {
@@ -145,11 +567,11 @@ class spreader extends shipWeapon {
 
         //top shot
         standardPlayer.sp_Animations.reserveAnimationShared(this.image(), (anim) => {
-            let origin = scn.player.retrieve();
+            let origin = scn._runner.player.retrieve();
             let graphicHeightPadding = anim.target().height / 2;
             let xDist = Graphics.width - (origin.x + origin.width);
             let factor = xDist / Graphics.width;
-            let speed = 30 * factor
+            let speed = 50 * factor
 
             anim.target().position.set(origin.x + origin.width, (origin.y + (origin.height / 2) - graphicHeightPadding))
             anim.cacheProps()
@@ -159,7 +581,7 @@ class spreader extends shipWeapon {
                 .action(0)
                 .moveXYRel(xDist, ((Graphics.height * .1) * -1) * factor, speed, 0)
                 .setThroughCb(() => {
-                    scn.playerShotIsCollided.call(anim)
+                    scn._runner.playerShotIsCollided.call(anim)
                 })
                 .setMasterCb(() => {
                     scn.removeChild(anim.target())
@@ -170,10 +592,10 @@ class spreader extends shipWeapon {
 
         //middle shot
         standardPlayer.sp_Animations.reserveAnimationShared(this.image(), (anim) => {
-            let origin = scn.player.retrieve();
+            let origin = scn._runner.player.retrieve();
             let graphicHeightPadding = anim.target().height / 2;
             let xDist = Graphics.width - (origin.x + origin.width);
-            let speed = 30 * (xDist / Graphics.width)
+            let speed = 50 * (xDist / Graphics.width)
 
             anim.target().position.set(origin.x + origin.width, origin.y + (origin.height / 2) - graphicHeightPadding)
             anim.cacheProps()
@@ -183,7 +605,7 @@ class spreader extends shipWeapon {
                 .action(0)
                 .moveXYRel(xDist, 0, speed, 0)
                 .setThroughCb(() => {
-                    scn.playerShotIsCollided.call(anim)
+                    scn._runner.playerShotIsCollided.call(anim)
                 })
                 .setMasterCb(() => {
                     scn.removeChild(anim.target())
@@ -194,11 +616,11 @@ class spreader extends shipWeapon {
 
         //bottom shot 
         standardPlayer.sp_Animations.reserveAnimationShared(this.image(), (anim) => {
-            let origin = scn.player.retrieve();
+            let origin = scn._runner.player.retrieve();
             let graphicHeightPadding = anim.target().height / 2;
             let xDist = Graphics.width - (origin.x + origin.width);
             let factor = xDist / Graphics.width;
-            let speed = 30 * factor
+            let speed = 50 * factor
 
             anim.target().position.set(origin.x + origin.width, origin.y + (origin.height / 2) - graphicHeightPadding)
             anim.cacheProps()
@@ -208,7 +630,7 @@ class spreader extends shipWeapon {
                 .action(0)
                 .moveXYRel(xDist, (Graphics.height * .1) * factor, speed, 0)
                 .setThroughCb(() => {
-                    scn.playerShotIsCollided.call(anim)
+                    scn._runner.playerShotIsCollided.call(anim)
                 })
                 .setMasterCb(() => {
                     scn.removeChild(anim.target())
@@ -338,9 +760,51 @@ Game_Runner.setMouseMode = function(useMouseMode){
     this._mouseOnlyMode = useMouseMode
 }
 
+Game_Runner.scn = function(){
+    return SceneManager._scene
+}
+
+Game_Runner.createContainers = function(){
+    this.createStage()
+    this.createStageElementsContainer()
+    this.createParticipantsContainer()
+    this.createPickupsContainer()
+    this.createProjectilesContainer()
+}
+
+Game_Runner.createStage = function(){
+    this.stage = standardPlayer.sp_ImageCache.createContainer();
+    this.scn().addChild(this.stage.retrieve())
+}
+
+Game_Runner.createStageElementsContainer = function(){
+    let options = {position:true}
+    this.stageElementsContainer = standardPlayer.sp_ImageCache.createContainer(true, 10, options)
+    this.stage.add(this.stageElementsContainer)
+}
+
+Game_Runner.createParticipantsContainer = function(){
+    let options = {position:true, tint:true, rotation:true, vertices:true}
+    this.participantsContainer = standardPlayer.sp_ImageCache.createContainer(true, 100, options)
+    this.stage.add(this.participantsContainer)
+}
+
+Game_Runner.createPickupsContainer = function(){
+    let options = {position:true, tint:true, rotation:false, vertices:false}
+    this.pickupsContainer = standardPlayer.sp_ImageCache.createContainer(true, 5, options)
+    this.stage.add(this.pickupsContainer)
+}
+
+Game_Runner.createProjectilesContainer = function(){
+    let options = {position:true, tint:true, rotation:true, vertices:true}
+    this.projectilesContainer = standardPlayer.sp_ImageCache.createContainer(true, 5, options)
+    this.stage.add(this.projectilesContainer)
+}
+
 Game_Runner.initialize = function(){
     this.enemies = []
     this.weapon = new machineGun()
+    this.createContainers()
     this.setController()
 }
 
@@ -535,5 +999,15 @@ Game_Controller.moveLeft = function () {
     if (player.x - 7 > 0)
         player.x -= 7
 
+}
+
+
+
+function Game_ShipEnemy(){
+    this.initialize.apply(this, arguments)
+}
+
+Game_ShipEnemy.prototype.initialize = function(id){
+    let en = $dataEnemies(id)
 }
 

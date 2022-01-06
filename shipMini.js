@@ -13,6 +13,19 @@
  * @param name
  * @type text
  * @desc name of action
+ * 
+ * @param repeat
+ * @text Repeat(# of times)
+ * @type number
+ * @default 0
+ * @min -1
+ * @desc Number of times to repeat this action. If -1, will repeat infinitely until anim is killed
+ * 
+ * @param condition
+ * @text Condition
+ * @type text
+ * @desc Name of condition in sp_ConditionStructs for this action to run
+ * 
  *
  * @param steps
  * @type struct<AnimationStep>[]
@@ -27,8 +40,8 @@
  * @desc name of step
  * 
  * @param condition
- * @type struct<Condition>[]
- * @text Conditions
+ * @type text
+ * @text Condition
  * @desc List of conditions that must pass for this step to run
  * 
  * @param dur
@@ -36,6 +49,13 @@
  * @type number
  * @default 1
  * @desc Length of time in frames for this step to complete
+ * 
+ * @param repeat
+ * @text Repeat(# of times)
+ * @type number
+ * @default 0
+ * @min -1
+ * @desc Number of times to repeat this step. If -1, will repeat infinitely until anim is killed
  * 
  * @param reset
  * @text Reset
@@ -60,6 +80,18 @@
  * @type boolean
  * @parent setMove
  * @default false
+ * 
+ * @param targetX
+ * @type number
+ * @text Target for X
+ * @desc If true, will use player's x as target
+ * @parent setMove
+ * 
+ * @param targety
+ * @type number
+ * @text Target for Y
+ * @desc If true, will use player's y as target
+ * @parent setMove
  * 
  * @param setScale
  * @text Set Scale
@@ -119,238 +151,6 @@
  * @parent setDimensions
  */
 
-
-/*~struct~Condition:
- * @param name
- * @type text
- * @text Name
- * @desc can be used in debugging to determine what condition is passing or failing
- * 
- * @param ==variableSection
- * @text =====Variables=====
- * @default
- * 
- * @param gameVariableLeft
- * @type variable
- * @text Variable A
- * @parent ==variableSection
- * 
- * @param gameVarComparator
- * @text Comparator
- * @type select
- * @option equals
- * @option >
- * @option <
- * @option >=
- * @option <=
- * @default equals
- * @parent ==variableSection
- * 
- * @param gameVariableRight
- * @type variable
- * @text Variable B
- * @parent ==variableSection
- * 
- * @param gameVariableExplicit
- * @type number
- * @text Value
- * @parent ==variableSection
- * 
- * @param ==switchSection
- * @text =====Game Switches=====
- * @default
- * 
- * @param switch
- * @type switch
- * @text Switch
- * @parent ==switchSection
- * 
- * @param switchValue
- * @type boolean
- * @text Is
- * @parent ==switchSection
- * @default true
- *
- * 
- * @param ==itemSection
- * @text =====Items=====
- * @default
- * 
- * @param item
- * @type item
- * @text Item
- * @parent ==itemSection
- * 
- * @param itemComparator
- * @text Operation
- * @type select
- * @option in posession
- * @option amount
- * @parent ==itemSection
- * 
- * @param itemAmount
- * @type number
- * @min 0
- * @text Amount
- * @desc only applicable if 'amount' operation is selected
- * @parent ==itemSection
- * 
- * 
- * @param ==actorSection
- * @text =====Actor=====
- * @default
- * 
- * 
- * @param actor
- * @type actor
- * @text Actor
- * @parent ==actorSection
- * 
- * @param inParty
- * @type boolean
- * @text Is In Party
- * @parent ==actorSection
- * 
- * @param hasClass
- * @type class
- * @text Has Class
- * @parent ==actorSection
- * 
- * @param hasWeapon
- * @type weapon
- * @text Has Weapon
- * @parent ==actorSection
- * 
- * @param hasArmor
- * @type armor
- * @text Has Armor
- * @parent ==actorSection
- * 
- * @param hasSkill
- * @type skill
- * @text Has Skill
- * @parent ==actorSection
- * 
- * @param hasState
- * @type state
- * @text Has State
- * @parent ==actorSection
- * 
- * @param ==playerSection
- * @text =====Player=====
- * @default
- * 
- * @param playerX
- * @text Player X
- * @type number
- * @default -1
- * @parent ==playerSection
- * 
- * @param playerY
- * @text Player Y
- * @type number
- * @default -1
- * @parent ==playerSection
- * 
- * @param playerCanMove
- * @text Can Move
- * @type boolean
- * @desc Evaluates event.canMove function
- * @parent ==playerSection
- * 
- * @param ==eventSection
- * @text =====Event=====
- * @default
- * 
- * @param event
- * @type number
- * @text EventId
- * @min 0
- * @parent ==eventSection
- * 
- * @param eventX
- * @text Event X
- * @type number
- * @parent ==eventSection
- * 
- * @param eventY
- * @text Event Y
- * @type number
- * @parent ==eventSection
- * 
- * @param eventCanMove
- * @text Can Move
- * @type boolean
- * @desc Evaluates event.canMove function
- * @parent ==eventSection
- * 
- * @param selfSwitch
- * @text Self Switch
- * @type select
- * @option none
- * @option A
- * @option B
- * @option C
- * @option D
- * @parent ==eventSection
- * 
- * @param ==goldSection
- * @text =====Gold=====
- * @default
- * 
- * @param goldComparator
- * @text Gold is 
- * @type select
- * @option equals
- * @option >
- * @option <
- * @option >=
- * @option <=
- * @option mod
- * @parent ==goldSection
- * 
- * 
- * @param goldValue
- * @type number
- * @default 0
- * @text Value
- * @parent ==goldSection
- * 
- * @param weapon
- * @type weapon
- * @text Weapon in Posession:
- * @default 0
- * 
- * 
- * @param armor
- * @type armor
- * @text Armor in Posession:
- * @default 0
- * 
- * @param ==enemySection
- * @text =====Enemy=====
- * @default
- * 
- * @param enemy
- * @type enemy
- * @text Enemy
- * @parent ==enemySection
- * 
- * @param enemyHasAppeared
- * @type boolean
- * @text Has Appeared
- * @parent ==enemySection
- *
- * @param enemyState
- * @type state
- * @text Has State
- * @parent ==enemySection
- * 
- * @param vehicle
- * @type vehicle
- * @text Driving Vehicle: 
- * 
- */
 
 
 /*:
@@ -456,50 +256,57 @@ shipMiniScene.prototype.enemyFire = function (enemy) {
     })
 }
 
-shipMiniScene.prototype.parseAnimation = function(animation){
+shipMiniScene.prototype.parseAnimation = function (animation) {
     let temp = standardPlayer.sp_Animations.createTemplate();
     let list = animation.actions;
     let length = list.length;
 
-    for(let i = 0; i < length; i++){
-        let action = temp.action(i)
-        for(let j = 0; j < list[i].steps.length; j++){
-            let step = list[i].steps[j];
-            let dur = step.dur;
-            let pad = 0;
-            if(step.setMove){
-                if(step.moveRelative){
-                    action = action.moveXYRel(step.x, step.y, dur, pad)
-                } else {
-                    action = action.moveXY(step.x, step.y, dur, pad)
-                }
-            }
-
-            if(step.setScale)
-                action = action.setScale(step.scaleX, step.scaleY, dur, pad)
-
-            if(step.setAlpha)
-                action = action.setAlpha(step.alpha, dur, pad)
-
-            if(step.setDimensions)
-                action = action.setDimensions(step.width, step.height, dur, pad)
-            
-            if(step.setRotation)
-                action = action.setRotation(step.rotation, dur, pad)
-
-            if(step.reset)
-                action = action.resetPosition(dur, pad)
-
-            if(j + 1 < list[i].steps.length){
-                console.log('running then')
-                action = action.then()
-            }
-            
-        }
-            
+    for (let i = 0; i < length; i++) {
+        if (list[i].repeat != 0) 
+            temp.action(i).setMasterRepeat(list[i].repeat)
+        
+        this.parseAction(temp.action(i), list[i])
     }
-
     return temp
+}
+
+shipMiniScene.prototype.parseAction = function (action, animationData) {
+    for (let j = 0; j < action.steps.length; j++) {
+        let step = animationData.steps[j]
+        let dur = step.dur;
+        let pad = 0;
+        
+        if (step.condition)
+            action.setRunCondition(standardPlayer.sp_ConditionStruct.getCondition(step.condition))
+
+        if (step.reset) {
+            action = action.resetPosition(dur, pad)
+            continue
+        }
+        if (step.setMove) {
+            
+            if (step.moveRelative) {
+                action = action.moveXYRel(step.x, step.y, dur, pad)
+            } else {
+                action = action.moveXY(step.x, step.y, dur, pad)
+            }
+        }
+
+        if (step.setScale)
+            action = action.setScale(step.scaleX, step.scaleY, dur, pad)
+
+        if (step.setAlpha)
+            action = action.setAlpha(step.alpha, dur, pad)
+
+        if (step.setDimensions)
+            action = action.setDimensions(step.width, step.height, dur, pad)
+
+        if (step.setRotation)
+            action = action.setRotation(step.rotation, dur, pad)
+
+    
+
+    }
 }
 
 
@@ -691,7 +498,7 @@ Input.pollLatestAxis = function (buttonName) {
 
 }
 
-TouchInput._onLeftButtonDown = function(event) {
+TouchInput._onLeftButtonDown = function (event) {
     const x = Graphics.pageToCanvasX(event.pageX);
     const y = Graphics.pageToCanvasY(event.pageY);
     if (Graphics.isInsideCanvas(x, y)) {
@@ -703,7 +510,7 @@ TouchInput._onLeftButtonDown = function(event) {
 };
 
 
-TouchInput._onRightButtonDown = function(event) {
+TouchInput._onRightButtonDown = function (event) {
     const x = Graphics.pageToCanvasX(event.pageX);
     const y = Graphics.pageToCanvasY(event.pageY);
     if (Graphics.isInsideCanvas(x, y)) {
@@ -715,21 +522,21 @@ TouchInput._onRightButtonDown = function(event) {
 };
 
 
-TouchInput._onMouseUp = function(event) {
+TouchInput._onMouseUp = function (event) {
     if (event.button === 0) {
         const x = Graphics.pageToCanvasX(event.pageX);
         const y = Graphics.pageToCanvasY(event.pageY);
         this._mousePressed = false;
         this._onRelease(x, y);
-    } else if (event.button === 1){
+    } else if (event.button === 1) {
         Game_Controller.leftPressed = false;
-    } else if (event.button === 2){
+    } else if (event.button === 2) {
         Game_Controller._charging = false;
         Game_Controller.rightPressed = false;
     }
 };
 
-TouchInput._onMouseMove = function(event) {
+TouchInput._onMouseMove = function (event) {
     const x = Graphics.pageToCanvasX(event.pageX);
     const y = Graphics.pageToCanvasY(event.pageY);
     if (this._mousePressed) {
@@ -756,15 +563,15 @@ Game_Runner.setController = function () {
     this.controller.setControls()
 }
 
-Game_Runner.setMouseMode = function(useMouseMode){
+Game_Runner.setMouseMode = function (useMouseMode) {
     this._mouseOnlyMode = useMouseMode
 }
 
-Game_Runner.scn = function(){
+Game_Runner.scn = function () {
     return SceneManager._scene
 }
 
-Game_Runner.createContainers = function(){
+Game_Runner.createContainers = function () {
     this.createStage()
     this.createStageElementsContainer()
     this.createParticipantsContainer()
@@ -772,36 +579,36 @@ Game_Runner.createContainers = function(){
     this.createProjectilesContainer()
 }
 
-Game_Runner.createStage = function(){
+Game_Runner.createStage = function () {
     this.stage = standardPlayer.sp_ImageCache.createContainer();
     this.scn().addChild(this.stage.retrieve())
 }
 
-Game_Runner.createStageElementsContainer = function(){
-    let options = {position:true}
+Game_Runner.createStageElementsContainer = function () {
+    let options = { position: true }
     this.stageElementsContainer = standardPlayer.sp_ImageCache.createContainer(true, 10, options)
     this.stage.add(this.stageElementsContainer)
 }
 
-Game_Runner.createParticipantsContainer = function(){
-    let options = {position:true, tint:true, rotation:true, vertices:true}
+Game_Runner.createParticipantsContainer = function () {
+    let options = { position: true, tint: true, rotation: true, vertices: true }
     this.participantsContainer = standardPlayer.sp_ImageCache.createContainer(true, 100, options)
     this.stage.add(this.participantsContainer)
 }
 
-Game_Runner.createPickupsContainer = function(){
-    let options = {position:true, tint:true, rotation:false, vertices:false}
+Game_Runner.createPickupsContainer = function () {
+    let options = { position: true, tint: true, rotation: false, vertices: false }
     this.pickupsContainer = standardPlayer.sp_ImageCache.createContainer(true, 5, options)
     this.stage.add(this.pickupsContainer)
 }
 
-Game_Runner.createProjectilesContainer = function(){
-    let options = {position:true, tint:true, rotation:true, vertices:true}
+Game_Runner.createProjectilesContainer = function () {
+    let options = { position: true, tint: true, rotation: true, vertices: true }
     this.projectilesContainer = standardPlayer.sp_ImageCache.createContainer(true, 5, options)
     this.stage.add(this.projectilesContainer)
 }
 
-Game_Runner.initialize = function(){
+Game_Runner.initialize = function () {
     this.enemies = []
     this.weapon = new machineGun()
     this.createContainers()
@@ -838,11 +645,11 @@ Game_Runner.playerShotIsCollided = function () {
 
 
 
-function Game_Controller(){
+function Game_Controller() {
     throw new Error('This is a static class')
 }
 
-Game_Controller.createControlProfile = function(){
+Game_Controller.createControlProfile = function () {
     Input.keyMapper["32"] = 'autofire'; //space bar
     Input.keyMapper["67"] = 'smartbomb' //c button
 
@@ -850,85 +657,85 @@ Game_Controller.createControlProfile = function(){
     this._firePressedTime = 0;
     //below object, ship game control name : Input.keymapper control name
     this.controlProfile = {
-        'up':'up',
-        'down':'down',
-        'right':'right',
-        'left':'left',
-        'fire':'ok',
+        'up': 'up',
+        'down': 'down',
+        'right': 'right',
+        'left': 'left',
+        'fire': 'ok',
         'smartbomb': 'smartbomb',
-        'autofire':'autofire',
-        'pause' : 'cancel'
+        'autofire': 'autofire',
+        'pause': 'cancel'
     }
 }
 
-Game_Controller.input = function(input){
+Game_Controller.input = function (input) {
     return this.controlProfile[input]
 }
 
 
 
 
-Game_Controller.setControls = function(){
-    this.rightCb = ()=>{
+Game_Controller.setControls = function () {
+    this.rightCb = () => {
         let input = this.input('right')
         if (Input.isPressed(input) && Input.latestHorizontal == input)
             this.moveRight();
     }
-    
-    this.leftCb = ()=>{
+
+    this.leftCb = () => {
         let input = this.input('left')
         if (Input.isPressed(input) && Input.latestHorizontal == input)
             this.moveLeft();
     }
-    
-    this.upCb = ()=>{
+
+    this.upCb = () => {
         let input = this.input('up')
         if (Input.isPressed(input) && Input.latestVertical == input)
             this.moveUp()
     }
-    
-    this.downCb = ()=>{
+
+    this.downCb = () => {
         let input = this.input('down')
         if (Input.isPressed(input) && Input.latestVertical == input)
             this.moveDown()
     }
-    
-    this.fireCb = ()=>{
+
+    this.fireCb = () => {
         let input = this.input('fire')
         let chargeTime = Game_Runner.weapon.chargeTime;
         let autofire = this.input('autofire')
 
-        if (Input.isTriggered(input) || TouchInput.isCancelled()){
+        if (Input.isTriggered(input) || TouchInput.isCancelled()) {
             Game_Runner.playerFire()
-        } else if(Input.isPressed(input) || Game_Controller._charging){
+        } else if (Input.isPressed(input) || Game_Controller._charging) {
             console.log('charging')
-            if(this._firePressedTime < chargeTime){
-              this._firePressedTime++
-            } 
+            if (this._firePressedTime < chargeTime) {
+                this._firePressedTime++
+            }
 
-            if(TouchInput.isTriggered() || Input.isTriggered(autofire)){
+            if (TouchInput.isTriggered() || Input.isTriggered(autofire)) {
                 console.log('triggering smart bomb')
             }
-        } else if(this._firePressedTime == chargeTime){
+        } else if (this._firePressedTime == chargeTime) {
             console.log('releasing')
             this.releaseCb()
         }
-            
+
     }
 
-    this.releaseCb = ()=>{
+    this.releaseCb = () => {
         Game_Runner.playerFire(this._firePressedTime)
         this._firePressedTime = 0;
     }
 
-    this.autofireCb = ()=>{
+    this.autofireCb = () => {
         let input = this.input('autofire')
         let interval = Game_Runner.weapon.autoFireInterval;
 
-        if(Game_Controller._charging)   
+        if (Game_Controller._charging)
             return
-        if(Input.isPressed(input) || TouchInput.isPressed()){
-            if(this._autoFirePressedTime < interval){
+        if (Input.isPressed(input) || TouchInput.isPressed()) {
+            if (this._autoFirePressedTime < interval) {
                 this._autoFirePressedTime++
             } else {
                 this._autoFirePressedTime = 0
@@ -940,8 +747,8 @@ Game_Controller.setControls = function(){
 
     }
 
-    this.mouseMoveCb = ()=>{
-        if(!Game_Runner._mouseOnlyMode)
+    this.mouseMoveCb = () => {
+        if (!Game_Runner._mouseOnlyMode)
             return
 
         let player = Game_Runner.player.retrieve();
@@ -952,12 +759,12 @@ Game_Controller.setControls = function(){
         let pY = player.y + player.height * .5;
         let distX = Math.abs(tX - pX) > speed ? tX - pX > 0 ? speed : -speed : tX - pX
         let distY = Math.abs(tY - pY) > speed ? tY - pY > 0 ? speed : -speed : tY - pY
-        
+
         console.log(distX, distY)
         player.x += distX;
         player.y += distY;
     }
-    
+
 
     standardPlayer.sp_Core.addBaseUpdate(this.leftCb)
     standardPlayer.sp_Core.addBaseUpdate(this.rightCb)
@@ -1003,11 +810,11 @@ Game_Controller.moveLeft = function () {
 
 
 
-function Game_ShipEnemy(){
+function Game_ShipEnemy() {
     this.initialize.apply(this, arguments)
 }
 
-Game_ShipEnemy.prototype.initialize = function(id){
+Game_ShipEnemy.prototype.initialize = function (id) {
     let en = $dataEnemies(id)
 }
 

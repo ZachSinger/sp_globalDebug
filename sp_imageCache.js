@@ -35,9 +35,6 @@ standardPlayer.sp_ImageCache.loadSharedSprite = function (url, cb, args) {
     let id = `sprite:${this.generateUUID()}`
     let stub = new spriteStub(id);
     let spr = new PIXI.Sprite.from(`img/${url}.png`);
-    
-    if(typeof cb == 'undefined')
-        cb = ()=>{};
 
     stub.setName(url)
     

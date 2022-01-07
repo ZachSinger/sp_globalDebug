@@ -174,6 +174,14 @@
 
 // standardPlayer.sp_Core.addDatabaseFile('$shipWeapons', 'ShipWeapons.json')
 
+var Imported = Imported || {};
+Imported.shipMini = 'shipMini';
+
+var standardPlayer = standardPlayer || { params: {} };
+standardPlayer.shipMini = standardPlayer.shipMini || {};
+
+standardPlayer.shipMini.Parameters = standardPlayer.sp_Core.fullUnpack(PluginManager.parameters('shipMini'));
+
 function shipMiniScene() {
     this.initialize.apply(this, arguments)
 }
@@ -255,60 +263,6 @@ shipMiniScene.prototype.enemyFire = function (enemy) {
         }
     })
 }
-
-shipMiniScene.prototype.parseAnimation = function (animation) {
-    let temp = standardPlayer.sp_Animations.createTemplate();
-    let list = animation.actions;
-    let length = list.length;
-
-    for (let i = 0; i < length; i++) {
-        if (list[i].repeat != 0) 
-            temp.action(i).setMasterRepeat(list[i].repeat)
-        
-        this.parseAction(temp.action(i), list[i])
-    }
-    return temp
-}
-
-shipMiniScene.prototype.parseAction = function (action, animationData) {
-    for (let j = 0; j < action.steps.length; j++) {
-        let step = animationData.steps[j]
-        let dur = step.dur;
-        let pad = 0;
-        
-        if (step.condition)
-            action.setRunCondition(standardPlayer.sp_ConditionStruct.getCondition(step.condition))
-
-        if (step.reset) {
-            action = action.resetPosition(dur, pad)
-            continue
-        }
-        if (step.setMove) {
-            
-            if (step.moveRelative) {
-                action = action.moveXYRel(step.x, step.y, dur, pad)
-            } else {
-                action = action.moveXY(step.x, step.y, dur, pad)
-            }
-        }
-
-        if (step.setScale)
-            action = action.setScale(step.scaleX, step.scaleY, dur, pad)
-
-        if (step.setAlpha)
-            action = action.setAlpha(step.alpha, dur, pad)
-
-        if (step.setDimensions)
-            action = action.setDimensions(step.width, step.height, dur, pad)
-
-        if (step.setRotation)
-            action = action.setRotation(step.rotation, dur, pad)
-
-    
-
-    }
-}
-
 
 
 
@@ -619,6 +573,71 @@ Game_Runner.playerFire = function (chargeTime) {
     this.weapon.fire(chargeTime);
 }
 
+Game_Runner.getAnimation = function (animationName) {
+    let list = standardPlayer.shipMini.Parameters.Animations;
+    let length = list.length;
+
+    for (let i = 0; i < length; i++) {
+        if (list[i].name == animationName)
+            return this.parseAnimation(list[i])
+    }
+
+    return false
+}
+
+Game_Runner.parseAnimation = function (animation) {
+    let temp = standardPlayer.sp_Animations.createTemplate();
+    let list = animation.actions;
+    let length = list.length;
+
+    for (let i = 0; i < length; i++) {
+        if (list[i].repeat != 0)
+            temp.action(i).setMasterRepeat(list[i].repeat)
+
+        this.parseAction(temp.action(i), list[i])
+    }
+    return temp
+}
+
+Game_Runner.parseAction = function (action, animationData) {
+    for (let j = 0; j < action.steps.length; j++) {
+        let step = animationData.steps[j]
+        let dur = step.dur;
+        let pad = 0;
+
+        if (step.condition)
+            action.setRunCondition(standardPlayer.sp_ConditionStruct.getCondition(step.condition))
+
+        if (step.reset) {
+            action = action.resetPosition(dur, pad)
+            continue
+        }
+        if (step.setMove) {
+
+            if (step.moveRelative) {
+                action = action.moveXYRel(step.x, step.y, dur, pad)
+            } else {
+                action = action.moveXY(step.x, step.y, dur, pad)
+            }
+        }
+
+        if (step.setScale)
+            action = action.setScale(step.scaleX, step.scaleY, dur, pad)
+
+        if (step.setAlpha)
+            action = action.setAlpha(step.alpha, dur, pad)
+
+        if (step.setDimensions)
+            action = action.setDimensions(step.width, step.height, dur, pad)
+
+        if (step.setRotation)
+            action = action.setRotation(step.rotation, dur, pad)
+
+
+
+    }
+}
+
 
 
 
@@ -810,11 +829,68 @@ Game_Controller.moveLeft = function () {
 
 
 
-function Game_ShipEnemy() {
-    this.initialize.apply(this, arguments)
+class Game_ShipEnemy {
+    constructor(id) {
+        let en = $dataEnemies[id]
+        let meta = JSON.parse(en.note)
+
+        this.data = en;
+        this.name = en.battlerName
+        this.image = standardPlayer.sp_ImageCache.loadSharedSprite(`enemies/${en.battlerName}`, this.onLoaded.bind(this))
+        this.meta = meta;
+        this.setAnimationTemplate()
+    }
+
+    onLoaded(){
+        if(this.meta.sprite){
+            this.image.retrieve().setGridData(this.meta.rows, this.meta.cols)
+            this.image.retrieve().setRowCol(this.meta.row, this.meta.col)
+        }
+    }
+
+    setAnimationTemplate(){
+        let templates = [];
+        let list = this.meta.move;
+        let length = list.length;
+
+        for(let i = 0; i < length; i++){ 
+            templates.push(Game_Runner.getAnimation(list[i]))
+        }
+
+        this.animationTemplates = templates;
+    }
 }
 
-Game_ShipEnemy.prototype.initialize = function (id) {
-    let en = $dataEnemies(id)
+
+class Game_ShipTroop {
+    constructor(id) {
+        let troop = $dataTroops[id]
+
+        this.troop = troop
+        this.loadEnemies()
+        this.getMetaData()
+    }
+
+    loadEnemies(){
+        let data = this.troop
+        let list = data.members;
+        let length = list.length;
+        let enemies = [];
+
+        for(let i = 0; i < length; i++){ 
+            enemies.push(new Game_ShipEnemy(list[i].enemyId))
+        }
+
+        this.members = enemies;
+    }
+
+    getMetaData(){
+        let page = this.troop.pages[0].list;
+        
+        this.horizontalSpacer = page[0].parameters[4];
+        this.verticalSpacer = page[1].parameters[4];
+    }
 }
+
+
 

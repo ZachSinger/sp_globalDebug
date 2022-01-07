@@ -1,3 +1,12 @@
+/*:
+* @plugindesc standardPlayer Animation Builder script
+* @author standardplayer
+* @target MZ
+* @base sp_Core
+* @orderAfter sp_Core
+*/
+
+
 var Imported = Imported || {};
 Imported.sp_Animations = 'sp_Animations';
 
@@ -224,7 +233,8 @@ class templateAnimation extends spAnimation{
         console.log(this)
         this.actions.forEach((action) => {
             for(let i = 0; i < action.steps.length; i++){
-                action.prepareStep(i);
+                action.index = i
+                action.prepareStep();
             }
         })
     }
@@ -273,6 +283,7 @@ class sp_Action {
     }
 
     moveXY(x, y, dur, pad) {
+        console.log('runninng moveX')
         let step = this.template();
 
         step.x = x;
@@ -604,6 +615,7 @@ class sp_Action {
             return;
 
         if (this.isResetPosition()) {
+            console.log('resetting position live')
             this.plotResetPath()
             step = this.step()
             props = Object.keys(step);
@@ -658,7 +670,6 @@ class sp_Action {
     }
 
     updateScale(props, index) {
-        console.log(this.target())
         this.target().scale.set(props.x[index], props.y[index])
     }
 

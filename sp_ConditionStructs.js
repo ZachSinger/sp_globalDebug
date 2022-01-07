@@ -4,6 +4,11 @@
 * @target MZ
 * @base sp_Core
 * @orderAfter sp_Core
+*
+* @param conditions
+* @type struct<Condition>[]
+* @text Conditions
+*
 */
 
 /*~struct~Condition:
@@ -29,7 +34,6 @@
  * @option <
  * @option >=
  * @option <=
- * @option mod
  * @default equals
  * @parent ==variableSection
  * 
@@ -130,22 +134,30 @@
  * @param playerX
  * @text Player X
  * @type number
+ * @default -1
  * @parent ==playerSection
  * 
  * @param playerY
  * @text Player Y
  * @type number
+ * @default -1
  * @parent ==playerSection
  * 
- * @param canMove
+ * @param playerCanMove
  * @text Can Move
  * @type boolean
- * @desc Evaluates player.canMove function
+ * @desc Evaluates event.canMove function
  * @parent ==playerSection
  * 
  * @param ==eventSection
  * @text =====Event=====
  * @default
+ * 
+ * @param event
+ * @type number
+ * @text EventId
+ * @min 0
+ * @parent ==eventSection
  * 
  * @param eventX
  * @text Event X
@@ -157,7 +169,7 @@
  * @type number
  * @parent ==eventSection
  * 
- * @param canMove
+ * @param eventCanMove
  * @text Can Move
  * @type boolean
  * @desc Evaluates event.canMove function
@@ -180,6 +192,7 @@
  * @param goldComparator
  * @text Gold is 
  * @type select
+ * @option equals
  * @option >
  * @option <
  * @option >=
@@ -238,74 +251,87 @@ Imported.sp_ConditionStruct = 'sp_ConditionStruct';
 var standardPlayer = standardPlayer || { params: {} };
 standardPlayer.sp_ConditionStruct = standardPlayer.sp_ConditionStruct || {};
 
-standardPlayer.sp_ConditionStruct.Parameters = PluginManager.parameters('sp_ConditionStruct');
+standardPlayer.sp_ConditionStruct.Parameters = standardPlayer.sp_Core.fullUnpack(PluginManager.parameters('sp_ConditionStructs'));
 
-
-standardPlayer.sp_ConditionStruct.checkCondition = function (condition) {
-    if (!this.checkGameVariableCondition(condition))
-        return false
-
-    if (!this.checkSwitch(condition))
-        return false
-
-    if (!this.checkItem(condition))
-        return false
-
-    if (!this.checkGold(condition))
-        return false
-
-    if(!this.checkActor(condition))
-        return false
-    
-    if(!this.checkPlayer(condition))
-        return false
-
-    if(!this.checkEvent(condition))
-        return false
-
-    return true
-}
-
-standardPlayer.sp_ConditionStruct.checkGameVariableCondition = function (condition) {
+standardPlayer.sp_ConditionStruct.constructCondition = function (condition) {
+    let container = [];
     let firstValue = condition.gameVariableLeft
     let secondValue = condition.gameVariableRight ?
         condition.gameVariableRight :
         condition.gameVariableExplicit
 
-    if (typeof firstValue == undefined || firstValue === 0 ||
-        typeof secondValue === 'undefined' || typeof condition.gameVarComparator == 'undefined')
-        return console.log(condition.name, 'no comparator/second value available for comparison')
+
+    if (typeof firstValue !== 'undefined' && firstValue !== 0 &&
+        typeof secondValue !== 'undefined' && typeof condition.gameVarComparator !== 'undefined')
+        container.push(() => { return this.checkGameVariableCondition(condition) })
+
+    if (condition.switch)
+        container.push(() => { return this.checkSwitch(condition) })
+
+    if (condition.item && condition.itemComparator)
+        container.push(() => { return this.checkItem(condition) })
+
+    if (condition.goldComparator && typeof condition.goldValue !== 'undefined')
+        container.push(() => { return this.checkGold(condition) })
+
+    if (condition.actor)
+        container.push(() => { return this.checkActor(condition) })
+
+    if (condition.playerX >= 0 || condition.playerY >= 0)
+        container.push(() => { return this.checkPlayer(condition) })
+
+    if (condition.event && (condition.eventX || condition.eventY || condition.eventCanMove === 0))
+        container.push(() => { return this.checkPlayer(condition) })
+
+    return this.getConditionCallback(container)
+}
+
+standardPlayer.sp_ConditionStruct.getConditionCallback = function(container){
+    return ()=>{
+        for(let i = 0; i < container.length; i++){
+            if(container[i]() !== true){       
+                console.log('failed conditionn')
+                return false
+            }
+        }
+        return true
+    }
+    
+}
+
+
+standardPlayer.sp_ConditionStruct.checkGameVariableCondition = function (condition) {
+    let result = false;
+    let firstValue = condition.gameVariableLeft
+    let secondValue = condition.gameVariableRight ?
+        condition.gameVariableRight :
+        condition.gameVariableExplicit
 
     firstValue = $gameVariables.value(firstValue)
     secondValue = typeof condition.gameVariableExplicit === 'undefined' ?
         $gameVariables.value(secondValue) :
         condition.gameVariableExplicit;
-
     switch (condition.gameVarComparator) {
-        case 'equals': return firstValue === secondValue;
-        case '<=': return firstValue <= secondValue
-        case '>=': return firstValue >= secondValue
-        case '<': return firstValue < secondValue
-        case '>': return firstValue > secondValue
-        default: return false
+        case 'equals': 
+            result = firstValue == secondValue;
+            break;
+        case '<=': result = firstValue <= secondValue; break
+        case '>=': result = firstValue >= secondValue; break
+        case '<': result = firstValue < secondValue; break
+        case '>': result = firstValue > secondValue; break
+        default: console.log('running default'); result = false; break
     }
 
-
+    return result
 }
 
 
 standardPlayer.sp_ConditionStruct.checkSwitch = function (condition) {
-    if (!condition.switch)
-        return true
-
     return $gameSwitches.value(condition.switch) == condition.switchValue
 }
 
 
 standardPlayer.sp_ConditionStruct.checkItem = function (condition) {
-    if (!condition.item || !condition.itemComparator)
-        return true
-
     if (condition.itemComparator == 'amount') {
         return $gameParty.numItems(condition.item) >= condition.itemAmount
     } else {
@@ -316,9 +342,6 @@ standardPlayer.sp_ConditionStruct.checkItem = function (condition) {
 }
 
 standardPlayer.sp_ConditionStruct.checkGold = function (condition) {
-    if (!condition.goldComparator || typeof condition.goldValue === 'undefined')
-        return true
-
     let firstValue = $gameParty.gold()
     let secondValue = condition.goldValue;
     switch (condition.goldComparator) {
@@ -334,10 +357,6 @@ standardPlayer.sp_ConditionStruct.checkGold = function (condition) {
 
 
 standardPlayer.sp_ConditionStruct.checkActor = function (condition) {
-    if (!condition.actor) {
-        return true
-    }
-
     let actor = $gameActors.actor(condition.actor)
     let partyPostion = $gameParty._actors.indexOf(condition.actor)
 
@@ -368,37 +387,45 @@ standardPlayer.sp_ConditionStruct.checkActor = function (condition) {
     return true
 }
 
-standardPlayer.sp_ConditionStruct.checkPlayer = function(condition){
-    if(!condition.playerX && !condition.playerY && !condition.playerX)
-        return true
-
-    if(condition.playerX >= 0 && $gamePlayer.x != condition.playerX)
+standardPlayer.sp_ConditionStruct.checkPlayer = function (condition) {
+    if (condition.playerX >= 0 && $gamePlayer.x != condition.playerX)
         return false
 
-    if(condition.playerY >= 0 && $gamePlayer.y != condition.playerY)
+    if (condition.playerY >= 0 && $gamePlayer.y != condition.playerY)
         return false
 
-    if(condition.playerCanMove !== 0 && $gamePlayer.canMove() != condition.playerCanMove)
+    if (condition.playerCanMove !== 0 && $gamePlayer.canMove() != condition.playerCanMove)
         return false
 
     return true
 }
 
-standardPlayer.sp_ConditionStruct.checkEvent = function(condition){
-    if(!condition.event || (!condition.eventX && !condition.eventY && condition.eventCanMove === 0))
-        return true
-
+standardPlayer.sp_ConditionStruct.checkEvent = function (condition) {
     let ev = $gameMap.event(condition.event)
 
-    if(condition.eventX >= 0 && $ev.x != condition.eventX)
+    if (condition.eventX >= 0 && $ev.x != condition.eventX)
         return false
 
-    if(condition.eventY >= 0 && $ev.y != condition.eventY)
+    if (condition.eventY >= 0 && $ev.y != condition.eventY)
         return false
 
-    if(condition.playerCanMove !== 0 && $gamePlayer.canMove() != condition.playerCanMove)
+    if (condition.playerCanMove !== 0 && $gamePlayer.canMove() != condition.playerCanMove)
         return false
 
     return true
 }
+
+standardPlayer.sp_ConditionStruct.getCondition = function(conditionName){
+    let list = this.Parameters.conditions;
+    let length = list.length;
+
+    for(let i = 0; i < length; i++){
+        if(list[i].name.toLowerCase() === conditionName.toLowerCase())
+            return this.constructCondition(list[i])
+    }
+
+    return ()=>{console.log('no condition found during standardPlayer.sp_conditionStruct.getConditionn')}
+}
+
+
 

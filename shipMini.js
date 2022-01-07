@@ -889,6 +889,34 @@ class Game_ShipTroop {
         
         this.horizontalSpacer = page[0].parameters[4];
         this.verticalSpacer = page[1].parameters[4];
+        this.xAnchor = page[2].parameters[4];
+        this.yAnchor = page[3].parameters[4]; 
+    }
+}
+
+
+class Game_Level{
+    constructor(id){
+        let data = $dataArmors[id];
+        let meta = JSON.parse(data.note);
+
+        this.name = data.name;
+        this.data = data;
+        this.meta = meta;
+        this.loadTroops()
+    }
+
+    loadTroops(){
+        let list = this.meta.troops;
+        let length = list.length;
+        let troops = [];
+
+        for(let i = 0; i < length; i++){ 
+            troops.push(new Game_ShipTroop(list[i]))
+        }   
+
+        this.troops = troops
+
     }
 }
 

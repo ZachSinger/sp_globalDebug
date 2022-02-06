@@ -12,3 +12,15 @@ var Imported = Imported || {};
     slz.storageAnywhere = slz.storageAnywhere || {};
 
     slz.storageAnywhere.Parameters = PluginManager.parameters('slz.storageAnywhere');
+
+/*  =====================================================================================================
+//         Class Definitions
+//  ===================================================================================================*/
+
+class StorageEntry {
+    constructor(type, id, quantity){
+        this.type = type
+        this. ide = id
+        this.quantity = quantity
+    }
+}
